@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.AccessControl;
@@ -286,10 +287,10 @@ namespace mapStuff
 
         static public void tileTable(int w, int h)
         {
-            coordinateGrid = new tileEntry[w + 2, h + 2];
-            for (int i = 0; i < w+2; i++)
+            coordinateGrid = new tileEntry[w, h];
+            for (int i = 0; i < w; i++)
             {
-                for (int j = 0; j < h+2; j++)
+                for (int j = 0; j < h; j++)
                 {
                     tileEntry tile = new tileEntry();
                     tile.y = j;
@@ -349,37 +350,59 @@ namespace mapStuff
                             {
                                 newbmp.SetPixel(i, j, Color.Green);
                                 coordinateGrid[i, j].tileType = 1;
+                                coordinateGrid[i, j].x = i;
+                                coordinateGrid[i, j].y = j;
                             }
                             else
                             {
                                 newbmp.SetPixel(i, j, Color.Blue);
                                 coordinateGrid[i, j].tileType = 0;
+                                coordinateGrid[i, j].x = i;
+                                coordinateGrid[i, j].y = j;
                             }
                         }
                     }
                     var memStream = new MemoryStream();
                     newbmp.Save("myMap.tif", ImageFormat.Tiff);
 
-                    //var v = new Voronator(points);
-                    //for (var i = 0; i < points.Length; i++)
-                    //{
-                    //    var vertices = v.GetPolygon(i);
-                    //}
-                    //
+                    List<tileEntry> landTiles = new List<tileEntry>();
+
+                    foreach (tileEntry tile in coordinateGrid)
+                    {
+                        if (tile.tileType == 1) 
+                        {
+                            landTiles.Add(tile);
+                        }
+                    }
+                    int n = landTiles.Count;
+                    while (n > 1)
+                    {
+                        n--;
+                        int k = rd.Next(n + 1);
+                        tileEntry value = landTiles[k];
+                        landTiles[k] = landTiles[n];
+                        landTiles[n] = value;
+                    }
+
                     var platebmp = new System.Drawing.Bitmap(maxXCells, maxYCells);
                     using (Graphics gplate = Graphics.FromImage(platebmp))
                     {
                         gplate.Clear(Color.Black);
-                        int platecount = 8;
+                        int platecount = 199;
                         var points = new Vector2[platecount];
                         Color[] colors = new Color[platecount];
                         float[] colorhues = new float[platecount];
                         int pixels = maxXCells * maxYCells - 2;
                         for (int i = 0; i < platecount; i++)
                         {
-                            points[i] = new Vector2(rd.Next(1, maxXCells-1), rd.Next(1, maxYCells-1));
-                            colors[i] = Color.FromArgb(rd.Next(5, 250), rd.Next(5, 255), rd.Next(0, 250));
-                            colorhues[i] = colors[i].GetHue();
+                            do
+                            {
+                                points[i] = new Vector2(rd.Next(1, maxXCells - 1), rd.Next(1, maxYCells - 1));
+                            } while (coordinateGrid[(int)points[i].x, (int)points[i].y].tileType == 0);
+                            do
+                            {
+                                colors[i] = Color.FromArgb(rd.Next(5, 250), rd.Next(5, 255), rd.Next(0, 250));
+                            } while (colors[i].GetHue() > 180 && colors[i].GetHue() < 300);
                             platebmp.SetPixel((int)points[i].x + 1, (int)points[i].y + 1, colors[i]);
                             pixels--;
                             platebmp.SetPixel((int)points[i].x + 1, (int)points[i].y, colors[i]);
@@ -401,74 +424,85 @@ namespace mapStuff
                         }
 
                         bool gotBlack = false;
+                        int printlooper = 0;
                         while (pixels > 0)
                         {
                             gotBlack = false;
-                            for (int i = 0; i < platebmp.Width; i++)
+                            var i = rd.Next(0, maxXCells);
+                            var j = rd.Next(0, maxYCells);
+                            Color selfa = Color.Black;
+                            selfa = platebmp.GetPixel(i, j);
+                            if (selfa.G + selfa.R + selfa.B == 0)
                             {
-                                for (int j = 0; j < platebmp.Height; j++)
-                                {
-                                    Color selfa = platebmp.GetPixel(i, j);
-                                    if (selfa.G + selfa.R + selfa.B != 0)
-                                    {
-                                        continue;
-                                    }
-                                    try
-                                    {
-                                        Color ngbourN = Color.Black;
-                                        Color ngbourS = Color.Black;
-                                        Color ngbourE = Color.Black;
-                                        Color ngbourW = Color.Black;
-                                        if (j+1 < platebmp.Height)
-                                        {
-                                            ngbourN = platebmp.GetPixel(i, j + 1);
-                                        }
-                                        if (j-1 > 0)
-                                        {
-                                            ngbourS = platebmp.GetPixel(i, j - 1);
-                                        }
-                                        if (i+1 < platebmp.Width)
-                                        {
-                                            ngbourE = platebmp.GetPixel(i + 1, j);
-                                        }
-                                        if (i-1 > 0)
-                                        {
-                                            ngbourW = platebmp.GetPixel(i - 1, j);
-                                        }
-                                        Color[] ngbors = { ngbourN, ngbourE, ngbourW, ngbourS};
-                                        Shuffle(rd, ngbors);
-                                        foreach (Color c in ngbors)
-                                        {
-                                            if (c.G + c.R + c.B > 0)
-                                            {
-                                                platebmp.SetPixel(i, j, c);
-                                                pixels--;
-                                                gotBlack = true;
-                                                break;
-                                            }
-                                            break;
-                                        }
-                                    }  
-                                    catch
-                                    {
-                                        continue;
-                                    }
-                                }
-                            }
-                            try
-                            {
-                                platebmp.Save("myMapPlates.tif", ImageFormat.Tiff);
-                            }
-                            catch {
                                 continue;
                             }
-
+                            Color ngbourN = Color.Black;
+                            Color ngbourS = Color.Black;
+                            Color ngbourE = Color.Black;
+                            Color ngbourW = Color.Black;
+                            if (j + 1 < platebmp.Height)
+                            {
+                                ngbourN = platebmp.GetPixel(i, j + 1);
+                                if (ngbourN.G + ngbourN.R + ngbourN.B == 0)
+                                {
+                                    platebmp.SetPixel(i, j + 1, selfa);
+                                    pixels--;
+                                }
+                            }
+                            if (j - 1 >= 0)
+                            {
+                                ngbourS = platebmp.GetPixel(i, j - 1);
+                                if (ngbourS.G + ngbourS.R + ngbourS.B == 0)
+                                {
+                                    platebmp.SetPixel(i, j - 1, selfa);
+                                    pixels--;
+                                }
+                            }
+                            if (i + 1 < platebmp.Width)
+                            {
+                                ngbourE = platebmp.GetPixel(i + 1, j);
+                                if (ngbourE.G + ngbourE.R + ngbourE.B == 0)
+                                {
+                                    platebmp.SetPixel(i + 1, j, selfa);
+                                    pixels--;
+                                }
+                            }
+                            if (i - 1 >= 0)
+                            {
+                                ngbourW = platebmp.GetPixel(i - 1, j);
+                                if (ngbourW.G + ngbourW.R + ngbourW.B == 0)
+                                {
+                                    platebmp.SetPixel(i - 1, j, selfa);
+                                    pixels--;
+                                }
+                            }
+                            printlooper++;
+                            if (printlooper > maxXCells*40)
+                            {
+                                printlooper = 0;
+                                try
+                                {
+                                    platebmp.Save("myMapPlates.tif", ImageFormat.Tiff);
+                                }
+                                catch
+                                {
+                                    continue;
+                                }
+                            }
                         }
-
-
-
+                    }
+                    for (int i = 0; i < maxXCells;i++)
+                    {
+                        for (int j = 0; j < maxYCells;j++)
+                        {
+                            if (coordinateGrid[i,j].tileType == 0)
+                            {
+                                platebmp.SetPixel(i, j, Color.Blue);
+                            }
+                        }
                     }
                     platebmp.Save("myMapPlates.tif", ImageFormat.Tiff);
+
 
                     return memStream.ToArray();
                 }
