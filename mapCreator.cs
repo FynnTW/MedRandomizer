@@ -56,13 +56,13 @@ namespace mapStuff
                 }
             }
         }
+        public static int contWidth = 500;
 
         static public void drawContinent(int x, int y, Bitmap g, int width, int height)
         {
             drawGroundTile(x, y, g, 0, 0);
             int xPos = x;
             int yPos = y;
-            int contWidth = 100;
             int rowDepth = 1;
             double distSteps = contWidth / 100;
             for (int i = 0; i < contWidth*2; i++)
@@ -164,7 +164,7 @@ namespace mapStuff
         {
             double weight = 1.0;
             drawGroundTile(x, y, g, 0, 0);
-            int mainlines = rd.Next(3, 30);
+            int mainlines = rd.Next(3, contWidth/5);
             landLine[] mainLinesArray = new landLine[mainlines];
             for (int i = 0;i < mainlines;i++)
             {
@@ -204,7 +204,7 @@ namespace mapStuff
 
         static public landLine randomLine(int x, int y, double weight, Bitmap g)
         {
-            double dist = rd.Next(1, 100) * weight;
+            double dist = rd.Next(1, contWidth) * weight;
             double angle = rd.Next(1, 360);
             int subLines = (int)(rd.Next(0, (int)dist) * weight);
             double endX = x + dist * Math.Cos(angle);
@@ -314,6 +314,8 @@ namespace mapStuff
             public int tileType;
         }
 
+        public static int regionCount = 199;
+        public static Vector2[] points = new Vector2[regionCount];
         public static byte[] CreateGridImage(int maxXCells, int maxYCells, int continents)
         {
             tileTable(maxXCells, maxYCells);
@@ -339,14 +341,42 @@ namespace mapStuff
                         }
                     }
 
-                    double[,] kernel = GaussianBlur(20, 50);
+                    double[,] kernel = GaussianBlur(blurLength, blurWeight);
                     Bitmap newbmp = Convolve(bmp, kernel);
+                    for (int x = maxXCells - 1; x > 0; x--)
+                    {
+                        for (int y = 9; y >= 0; y--)
+                        {
+                            newbmp.SetPixel(x, y, newbmp.GetPixel(x, y + 1));
+                        }
+                    }
+                    for (int x = maxXCells - 9; x < maxXCells; x++)
+                    {
+                        for (int y = 0; y < maxYCells; y++)
+                        {
+                            newbmp.SetPixel(x, y, newbmp.GetPixel(x - 1, y));
+                        }
+                    }
+                    for (int x = 0; x < maxXCells; x++)
+                    {
+                        for (int y = maxYCells - 9; y < maxYCells; y++)
+                        {
+                            newbmp.SetPixel(x, y, newbmp.GetPixel(x, y - 1));
+                        }
+                    }
+                    for (int x = 9; x >= 0; x--)
+                    {
+                        for (int y = 0; y < maxYCells; y++)
+                        {
+                            newbmp.SetPixel(x, y, newbmp.GetPixel(x + 1, y));
+                        }
+                    }
                     for (int i = 0;i < newbmp.Width;i++)
                     {
                         for (int j = 0; j < newbmp.Height; j++)
                         {
                             Color pixel = newbmp.GetPixel(i, j);
-                            if (pixel.G > 50)
+                            if (pixel.G > 20)
                             {
                                 newbmp.SetPixel(i, j, Color.Green);
                                 coordinateGrid[i, j].tileType = 1;
@@ -388,8 +418,8 @@ namespace mapStuff
                     using (Graphics gplate = Graphics.FromImage(platebmp))
                     {
                         gplate.Clear(Color.Black);
-                        int platecount = 199;
-                        var points = new Vector2[platecount];
+                        int platecount = regionCount;
+                        points = new Vector2[regionCount];
                         Color[] colors = new Color[platecount];
                         float[] colorhues = new float[platecount];
                         int pixels = maxXCells * maxYCells - 2;
@@ -501,7 +531,18 @@ namespace mapStuff
                             }
                         }
                     }
-                    platebmp.Save("myMapPlates.tif", ImageFormat.Tiff);
+                    foreach (Vector2 point in points )
+                    {
+                        platebmp.SetPixel((int)point.x, (int)point.y, Color.Black);
+                    }
+                    try
+                    {
+                        platebmp.Save("myMapPlates.tif", ImageFormat.Tiff);
+                    }
+                    catch
+                    {
+                        platebmp.Save("myMapPlates.tif", ImageFormat.Tiff);
+                    }
 
 
                     return memStream.ToArray();
@@ -519,6 +560,10 @@ namespace mapStuff
                 array[k] = temp;
             }
         }
+
+        public static int blurLength = 20;
+        public static double blurWeight = 50;
+
 
         public static double[,] GaussianBlur(int lenght, double weight)
         {
