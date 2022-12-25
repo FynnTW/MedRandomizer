@@ -43,7 +43,7 @@ namespace Realistic
             public int y;
             public int groundType;
             public int landType;
-            public int height;
+            public int height = -1;
             public double distToPlateBorder;
             public mapPlate plate;
             public bool border;
@@ -55,6 +55,7 @@ namespace Realistic
             public List<Vector2> borderTiles = new List<Vector2>();
             public List<Vector2> allTiles = new List<Vector2>();
             public List<Vector2> convergentTiles = new List<Vector2>();
+            public List<Point> rangePoints = new List<Point>();
             public Vector2 originPoint;
             public int plateType;
             public int direction;
@@ -78,7 +79,7 @@ namespace Realistic
                     tile.x = i;
                     tile.groundType = 0;
                     tile.landType = 0;
-                    tile.height = 0;
+                    tile.height = -1;
                     tileDB[i, j] = tile;
                 }
             }
@@ -265,6 +266,7 @@ namespace Realistic
             MessageBox.Show("Done");
             double[,] kernel = GaussianBlur(blurLength, blurWeight);
             mapImage = Convolve(mapImage, kernel);
+            setHTiles = mapWidth * mapHeight;
             for (int i = 0; i < mapImage.Width; i++)
             {
                 for (int j = 0; j < mapImage.Height; j++)
@@ -284,6 +286,8 @@ namespace Realistic
                     {
                         mapImage.SetPixel(i, j, Color.Blue);
                         tileDB[i, j].landType = 0;
+                        tileDB[i, j].height = 0;
+                        setHTiles--;
                     }
                 }
             }
@@ -298,10 +302,94 @@ namespace Realistic
             {
             }
             MessageBox.Show("Done");
+            mapImage = new System.Drawing.Bitmap(mapWidth, mapHeight);
+            g = Graphics.FromImage(mapImage);
+            g.Clear(Color.Black);
+            imageWindow.pictureBox2.BackgroundImage = mapImage;
+            imageWindow.Refresh();
+            int depth = 0;
+            while (setHTiles > 0)
+            {
+                for (int i = 0; i < mapImage.Width; i++)
+                {
+                    for (int j = 0; j < mapImage.Height; j++)
+                    {
+                        getHeight(i, j, depth);
+                    }
+                }
+                depth++;
+                imageWindow.Refresh();
+            }
+            makeRanges();
+            makeHills();
+            imageWindow.Refresh();
+            MessageBox.Show("Done");
+            kernel = GaussianBlur(blurLength+7, blurWeight+15);
+            mapImage = Convolve(mapImage, kernel);
+            for (int i = 0; i < mapImage.Width; i++)
+            {
+                for (int j = 0; j < mapImage.Height; j++)
+                {
+                    if (tileDB[i, j].landType == 0)
+                    {
+                        mapImage.SetPixel(i, j, Color.Blue);
+                    }
+                }
+            }
+            imageWindow.Refresh();
+            MessageBox.Show("Done");
+            try
+            {
+                mapImage.Save("myMapHeights.tif", ImageFormat.Tiff);
+            }
+            catch
+            {
+            }
+            MessageBox.Show("Done");
+        }
+
+        static public void getHeight(int x, int y, int depth)
+        {
+            if (tileDB[x,y].height >= 0)
+            {
+                return;
+            }
+            if (tileDB[x,y].landType == 0)
+            {
+                tileDB[x, y].height = 0;
+                mapImage.SetPixel(x, y, Color.Blue);
+                return;
+            }
+            List<Point> pointList = new List<Point>();
+            Point tileN = new Point(x, y - 1);
+            Point tileNE = new Point(x + 1, y - 1);
+            Point tileE = new Point(x + 1, y);
+            Point tileSE = new Point(x + 1, y + 1);
+            Point tileS = new Point(x, y + 1);
+            Point tileSW = new Point(x - 1, y + 1);
+            Point tileW = new Point(x - 1, y);
+            Point tileNW = new Point(x - 1, y - 1);
+            Point[] ngbors = {tileN, tileNE, tileE, tileSE, tileS, tileSW, tileW, tileNW};
+            foreach (Point point in ngbors)
+            {
+                if (point.X < 0 || point.X > mapWidth - 1 || point.Y < 0 || point.Y > mapHeight - 1)
+                {
+                    continue;
+                }
+                if (tileDB[point.X, point.Y].height == depth)
+                {
+                    tileDB[x, y].height = depth + 1;
+                    setHTiles--;
+                    mapImage.SetPixel(x, y, Color.FromArgb(tileDB[x, y].height, tileDB[x, y].height, tileDB[x, y].height));
+                    return;
+                }
+            }
+
         }
 
         static public int blurLength = 10;
         static public double blurWeight = 50;
+        static int setHTiles = mapWidth * mapHeight;
 
         static int GetHeadingDifference(int heading1, int heading2)
         {
@@ -407,6 +495,7 @@ namespace Realistic
                             {
                                 continue;
                             }
+                            plate.rangePoints.Add(new Point((int)newRangePoint.x, (int)newRangePoint.y));
                             makeIsland(newRangePoint, 2);
                         }
                     }
@@ -435,6 +524,60 @@ namespace Realistic
 
         }
 
+        public static void makeRanges()
+        {
+            foreach (mapPlate plate in plateDB)
+            {
+                foreach (Point point in plate.rangePoints)
+                {
+                    int startHeight = rd.Next(180, 220);
+                    int rangeSize = startHeight - 150;
+                    Point newPoint = point;
+                    for (int i = 0; i < rangeSize; i++)
+                    {
+                        if (newPoint.X < 0 || newPoint.X > mapWidth - 1 || newPoint.Y < 0 || newPoint.Y > mapHeight - 1)
+                        {
+                            continue;
+                        }
+                        if (tileDB[newPoint.X, newPoint.Y].landType == 1)
+                        {
+                            tileDB[newPoint.X, newPoint.Y].height = startHeight - i;
+                            mapImage.SetPixel(newPoint.X, newPoint.Y, Color.FromArgb(startHeight - i, startHeight - i, startHeight - i));
+                            newPoint = new Point((newPoint.X - 1) + rd.Next(0, 3), (newPoint.Y - 1) + rd.Next(0, 3));
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void makeHills()
+        {
+            foreach (mapPlate plate in plateDB)
+            {
+                int hillCount = rd.Next(0, plate.allTiles.Count/2);
+                for (int r = 0; r < hillCount; r++)
+                {
+                    int rangeSize = rd.Next(0, 17);
+                    Vector2 newPoint = plate.allTiles[rd.Next(0, plate.allTiles.Count)];
+                    int startHeightBonus = rangeSize;
+                    for (int i = 0; i < rangeSize; i++)
+                    {
+                        if (newPoint.x < 0 || newPoint.x > mapWidth - 1 || newPoint.y < 0 || newPoint.y > mapHeight - 1)
+                        {
+                            continue;
+                        }
+                        if (tileDB[(int)newPoint.x, (int)newPoint.y].landType == 1)
+                        {
+                            tileDB[(int)newPoint.x, (int)newPoint.y].height += startHeightBonus - i;
+                            tileDB[(int)newPoint.x, (int)newPoint.y].height = Math.Max(3, Math.Min(255, tileDB[(int)newPoint.x, (int)newPoint.y].height));
+                            mapImage.SetPixel((int)newPoint.x, (int)newPoint.y, Color.FromArgb(tileDB[(int)newPoint.x, (int)newPoint.y].height, tileDB[(int)newPoint.x, (int)newPoint.y].height, tileDB[(int)newPoint.x, (int)newPoint.y].height));
+                            newPoint = new Vector2((newPoint.x - 1) + rd.Next(0, 3), (newPoint.y - 1) + rd.Next(0, 3));
+                        }
+                    }
+                }
+            }
+        }
+
         public static void makeIsland(Vector2 point, int land)
         {
             int islandSize = rd.Next(0, xMargin*15);
@@ -450,14 +593,14 @@ namespace Realistic
                     continue;
                 }
 
-                if (land == 1 && tileDB[(int)newPoint.x, (int)newPoint.y].convergence.Count > 1)
+                if (land == 1)
                 {
                     mapImage.SetPixel((int)newPoint.x, (int)newPoint.y, Color.Green);
                     tileDB[(int)newPoint.x, (int)newPoint.y].landType = 1;
                     newPoint = new Vector2((newPoint.x - 1) + rd.Next(0, 3), (newPoint.y - 1) + rd.Next(0, 3));
                     continue;
                 } 
-                else if(land == 2 && tileDB[(int)newPoint.x, (int)newPoint.y].convergence.Count > 1 && tileDB[(int)newPoint.x, (int)newPoint.y].landType == 1)
+                else if(land == 2 && tileDB[(int)newPoint.x, (int)newPoint.y].landType == 1 && tileDB[(int)newPoint.x, (int)newPoint.y].groundType == 0)
                 {
                     mapImage.SetPixel((int)newPoint.x, (int)newPoint.y, Color.Brown);
                     tileDB[(int)newPoint.x, (int)newPoint.y].landType = 1;
