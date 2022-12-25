@@ -54,6 +54,13 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="mapWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="mapWindow.Designer.cs">
+      <DependentUpon>mapWindow.cs</DependentUpon>
+    </Compile>
+    <Compile Include="realMap.cs" />
     <Compile Include="mapCreator.cs" />
     <Compile Include="MainFile.cs" />
     <Compile Include="UserControl1.cs">
@@ -79,6 +86,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="mapWindow.resx">
+      <DependentUpon>mapWindow.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="UserControl1.resx">
       <DependentUpon>UserControl1.cs</DependentUpon>
     </EmbeddedResource>
