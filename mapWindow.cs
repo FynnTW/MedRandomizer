@@ -27,5 +27,10 @@ namespace MedRandomizer
         {
             e.Cancel = true;
         }
+
+        private void mapWindow_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

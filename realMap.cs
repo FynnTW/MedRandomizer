@@ -47,6 +47,7 @@ namespace Realistic
             public double distToPlateBorder;
             public mapPlate plate;
             public bool border;
+            public bool river = false;
             public List<mapPlate> convergence = new List<mapPlate>();
         }
         public class mapPlate
@@ -63,6 +64,7 @@ namespace Realistic
             public int fillTiles;
             public int tileCount;
             public int speed;
+            public List<Point> riverPoints = new List<Point>();
         }
 
         static public mapPlate[] plateDB = new mapPlate[plateCount];
@@ -317,25 +319,32 @@ namespace Realistic
                         getHeight(i, j, depth);
                     }
                 }
-                depth++;
+                if (depth < baseHeight)
+                {
+                    depth++;
+                }
                 imageWindow.Refresh();
             }
             makeRanges();
             makeHills();
+            makeValleys();
             imageWindow.Refresh();
             MessageBox.Show("Done");
-            kernel = GaussianBlur(blurLength+7, blurWeight+15);
+            kernel = GaussianBlur(blurLength+3, blurWeight+5);
             mapImage = Convolve(mapImage, kernel);
             for (int i = 0; i < mapImage.Width; i++)
             {
                 for (int j = 0; j < mapImage.Height; j++)
                 {
+                    tileDB[i, j].height = mapImage.GetPixel(i, j).R;
                     if (tileDB[i, j].landType == 0)
                     {
                         mapImage.SetPixel(i, j, Color.Blue);
                     }
                 }
             }
+            makeRivers();
+            imageWindow.pictureBox2.BackgroundImage = mapImage;
             imageWindow.Refresh();
             MessageBox.Show("Done");
             try
@@ -383,6 +392,13 @@ namespace Realistic
                     mapImage.SetPixel(x, y, Color.FromArgb(tileDB[x, y].height, tileDB[x, y].height, tileDB[x, y].height));
                     return;
                 }
+                else if (tileDB[point.X, point.Y].height == baseHeight)
+                {
+                    tileDB[x, y].height = baseHeight;
+                    setHTiles--;
+                    mapImage.SetPixel(x, y, Color.FromArgb(tileDB[x, y].height, tileDB[x, y].height, tileDB[x, y].height));
+                    return;
+                }
             }
 
         }
@@ -390,6 +406,7 @@ namespace Realistic
         static public int blurLength = 10;
         static public double blurWeight = 50;
         static int setHTiles = mapWidth * mapHeight;
+        static int baseHeight = 25;
 
         static int GetHeadingDifference(int heading1, int heading2)
         {
@@ -470,7 +487,7 @@ namespace Realistic
                     checkBorderFill(tile);
                 }
 
-                int lakeCount = rd.Next(0, plate.allTiles.Count / 5000);
+                int lakeCount = rd.Next(0, plate.allTiles.Count / 8000);
                 for (int i = 0; i < lakeCount; i++)
                 {
                     Vector2 newLakePoint = plate.allTiles[rd.Next(0, plate.allTiles.Count)];
@@ -546,18 +563,278 @@ namespace Realistic
                             newPoint = new Point((newPoint.X - 1) + rd.Next(0, 3), (newPoint.Y - 1) + rd.Next(0, 3));
                         }
                     }
+                    if (newPoint.X > 0 && newPoint.X < mapWidth - 1 && newPoint.Y > 0 && newPoint.Y < mapHeight - 1 && tileDB[newPoint.X, newPoint.Y].landType == 1 && tileDB[newPoint.X, newPoint.Y].height < 150)
+                    {
+                        plate.riverPoints.Add(newPoint);
+                        tileDB[newPoint.X, newPoint.Y].river = true;
+                    }
+                    if (getPercent() > 75)
+                    {
+                        startHeight = startHeight - rd.Next(5, 25);
+                        rangeSize = startHeight - 150;
+                        newPoint = point;
+                        int angle = plate.direction;
+                        angle = Math.Abs(180 - angle);
+                        int dist = ((xMargin + yMargin) / 2) + plate.speed * rd.Next(0, 30);
+                        newPoint.X = (int)Math.Round(newPoint.X + (dist * Math.Cos(angle)));
+                        newPoint.Y = (int)Math.Round(newPoint.Y + (dist * Math.Sin(angle)));
+                        for (int i = 0; i < rangeSize; i++)
+                        {
+                            if (newPoint.X < 0 || newPoint.X > mapWidth - 1 || newPoint.Y < 0 || newPoint.Y > mapHeight - 1)
+                            {
+                                continue;
+                            }
+                            if (tileDB[newPoint.X, newPoint.Y].landType == 1)
+                            {
+                                tileDB[newPoint.X, newPoint.Y].height = startHeight - i;
+                                mapImage.SetPixel(newPoint.X, newPoint.Y, Color.FromArgb(startHeight - i, startHeight - i, startHeight - i));
+                                newPoint = new Point((newPoint.X - 1) + rd.Next(0, 3), (newPoint.Y - 1) + rd.Next(0, 3));
+                            }
+                        }
+                        if (newPoint.X > 0 && newPoint.X < mapWidth - 1 && newPoint.Y > 0 && newPoint.Y < mapHeight - 1 && tileDB[newPoint.X, newPoint.Y].landType == 1 && tileDB[newPoint.X, newPoint.Y].height < 150)
+                        {
+                            plate.riverPoints.Add(newPoint);
+                            tileDB[newPoint.X, newPoint.Y].river = true;
+                        }
+                    }
+                    if (getPercent() > 90)
+                    {
+                        startHeight = startHeight - rd.Next(10, 50);
+                        rangeSize = startHeight - 150;
+                        newPoint = point;
+                        int angle = plate.direction;
+                        angle = Math.Abs(180 - angle);
+                        int dist = (((xMargin + yMargin) / 2) + plate.speed) * rd.Next(0, 30);
+                        newPoint.X = (int)Math.Round(newPoint.X + (dist * Math.Cos(angle)));
+                        newPoint.Y = (int)Math.Round(newPoint.Y + (dist * Math.Sin(angle)));
+                        for (int i = 0; i < rangeSize; i++)
+                        {
+                            if (newPoint.X < 0 || newPoint.X > mapWidth - 1 || newPoint.Y < 0 || newPoint.Y > mapHeight - 1)
+                            {
+                                continue;
+                            }
+                            if (tileDB[newPoint.X, newPoint.Y].landType == 1)
+                            {
+                                tileDB[newPoint.X, newPoint.Y].height = Math.Max(3, startHeight - i);
+                                mapImage.SetPixel(newPoint.X, newPoint.Y, Color.FromArgb(tileDB[newPoint.X, newPoint.Y].height, tileDB[newPoint.X, newPoint.Y].height, tileDB[newPoint.X, newPoint.Y].height));
+                                newPoint = new Point((newPoint.X - 1) + rd.Next(0, 3), (newPoint.Y - 1) + rd.Next(0, 3));
+                            }
+                        }
+                        if (newPoint.X > 0 && newPoint.X < mapWidth - 1 && newPoint.Y > 0 && newPoint.Y < mapHeight - 1 && tileDB[newPoint.X, newPoint.Y].landType == 1 && tileDB[newPoint.X, newPoint.Y].height < 180)
+                        {
+                            plate.riverPoints.Add(newPoint);
+                            tileDB[newPoint.X, newPoint.Y].river = true;
+                        }
+                    }
                 }
             }
         }
+
+        public static void makeRivers()
+        {
+            foreach (mapPlate plate in plateDB)
+            {
+                foreach (Point point in plate.riverPoints)
+                {
+                    int x = point.X;
+                    int y = point.Y;
+                    bool foundSea = false;
+                    int riverlooper = 0;
+                    List<Point> visited = new List<Point>();
+                    visited.Add(point);
+                    imageWindow.Refresh();
+                    while (foundSea == false && riverlooper < 5000001)
+                    {
+                        Point currpoint = new Point(x,y);
+                        List<Point> pointList = new List<Point>();
+                        bool invalidTile = false;
+                        Point dPoint = new Point(x, y - 1);
+                        if (!visited.Contains(dPoint))
+                        {
+                            Point ntileN = new Point(dPoint.X, dPoint.Y - 1);
+                            Point ntileE = new Point(dPoint.X + 1, dPoint.Y);
+                            Point ntileS = new Point(dPoint.X, dPoint.Y + 1);
+                            Point ntileW = new Point(dPoint.X - 1, dPoint.Y);
+                            Point[] nngbors = { ntileN, ntileE, ntileS, ntileW };
+                            foreach (Point npoint in nngbors)
+                            {
+                                if (npoint.X < 0 || npoint.X > mapWidth - 1 || npoint.Y < 0 || npoint.Y > mapHeight - 1)
+                                {
+                                    continue;
+                                }
+                                if (npoint == currpoint)
+                                {
+                                    continue;
+                                }
+                                if (visited.Contains(npoint))
+                                {
+                                    invalidTile = true;
+                                    break;
+                                }
+                            }
+                            if (!invalidTile)
+                            {
+                                pointList.Add(dPoint);
+                            }
+                        }
+                        dPoint = new Point(x + 1, y);
+                        if (!visited.Contains(dPoint))
+                        {
+                            Point ntileN = new Point(dPoint.X, dPoint.Y - 1);
+                            Point ntileE = new Point(dPoint.X + 1, dPoint.Y);
+                            Point ntileS = new Point(dPoint.X, dPoint.Y + 1);
+                            Point ntileW = new Point(dPoint.X - 1, dPoint.Y);
+                            Point[] nngbors = { ntileN, ntileE, ntileS, ntileW };
+                            foreach (Point npoint in nngbors)
+                            {
+                                if (npoint.X < 0 || npoint.X > mapWidth - 1 || npoint.Y < 0 || npoint.Y > mapHeight - 1)
+                                {
+                                    continue;
+                                }
+                                if (npoint == currpoint)
+                                {
+                                    continue;
+                                }
+                                if (visited.Contains(npoint))
+                                {
+                                    invalidTile = true;
+                                    break;
+                                }
+                            }
+                            if (!invalidTile)
+                            {
+                                pointList.Add(dPoint);
+                            }
+                        }
+                        dPoint = new Point(x, y + 1);
+                        if (!visited.Contains(dPoint))
+                        {
+                            Point ntileN = new Point(dPoint.X, dPoint.Y - 1);
+                            Point ntileE = new Point(dPoint.X + 1, dPoint.Y);
+                            Point ntileS = new Point(dPoint.X, dPoint.Y + 1);
+                            Point ntileW = new Point(dPoint.X - 1, dPoint.Y);
+                            Point[] nngbors = { ntileN, ntileE, ntileS, ntileW };
+                            foreach (Point npoint in nngbors)
+                            {
+                                if (npoint.X < 0 || npoint.X > mapWidth - 1 || npoint.Y < 0 || npoint.Y > mapHeight - 1)
+                                {
+                                    continue;
+                                }
+                                if (npoint == currpoint)
+                                {
+                                    continue;
+                                }
+                                if (visited.Contains(npoint))
+                                {
+                                    invalidTile = true;
+                                    break;
+                                }
+                            }
+                            if (!invalidTile)
+                            {
+                                pointList.Add(dPoint);
+                            }
+                        }
+                        dPoint = new Point(x - 1, y);
+                        if (!visited.Contains(dPoint))
+                        {
+                            Point ntileN = new Point(dPoint.X, dPoint.Y - 1);
+                            Point ntileE = new Point(dPoint.X + 1, dPoint.Y);
+                            Point ntileS = new Point(dPoint.X, dPoint.Y + 1);
+                            Point ntileW = new Point(dPoint.X - 1, dPoint.Y);
+                            Point[] nngbors = { ntileN, ntileE, ntileS, ntileW };
+                            foreach (Point npoint in nngbors)
+                            {
+                                if (npoint.X < 0 || npoint.X > mapWidth - 1 || npoint.Y < 0 || npoint.Y > mapHeight - 1)
+                                {
+                                    continue;
+                                }
+                                if (npoint == currpoint)
+                                {
+                                    continue;
+                                }
+                                if (visited.Contains(npoint))
+                                {
+                                    invalidTile = true;
+                                    break;
+                                }
+                            }
+                            if (!invalidTile)
+                            {
+                                pointList.Add(dPoint);
+                            }
+                        }
+                        if (pointList.Count == 0)
+                        {
+                            foreach (Point rpoint in visited)
+                            {
+                                if (!globalRivers.Contains(rpoint))
+                                {
+                                    tileDB[rpoint.X, rpoint.Y].river = false;
+                                    mapImage.SetPixel(rpoint.X, rpoint.Y, Color.Pink);
+                                }
+                            }
+                            break;
+                        }
+                        Point lowestNeighbor = pointList[rd.Next(0, pointList.Count)];
+                        foreach (Point newPoint in pointList)
+                        {
+                            if (tileDB[newPoint.X, newPoint.Y].landType == 0)
+                            {
+                                foundSea = true;
+                                break;
+                            }
+                            if (tileDB[newPoint.X, newPoint.Y].height < tileDB[lowestNeighbor.X, lowestNeighbor.Y].height)
+                            {
+                                lowestNeighbor = newPoint;
+                            }
+                        }
+                        if (tileDB[currpoint.X, currpoint.Y].height < tileDB[lowestNeighbor.X, lowestNeighbor.Y].height)
+                        {
+                            tileDB[lowestNeighbor.X, lowestNeighbor.Y].height = Math.Max(1, tileDB[currpoint.X, currpoint.Y].height - 1);
+                        }
+                        if (!foundSea)
+                        {
+                            visited.Add(lowestNeighbor);
+                            tileDB[lowestNeighbor.X, lowestNeighbor.Y].river = true;
+                            int color = Math.Min(riverlooper, 255);
+                            color = 255;
+                            mapImage.SetPixel(lowestNeighbor.X, lowestNeighbor.Y, Color.FromArgb(color, 0, 0));
+                            x = lowestNeighbor.X;
+                            y = lowestNeighbor.Y;
+                            riverlooper++;
+                        }
+                    }
+                    if (riverlooper == 5000000)
+                    {
+                        foreach (Point rpoint in visited)
+                        {
+                            if (!globalRivers.Contains(rpoint))
+                            {
+                                tileDB[rpoint.X, rpoint.Y].river = false;
+                                mapImage.SetPixel(rpoint.X, rpoint.Y, Color.Green);
+                            }
+                        }
+                        break;
+                    }
+                    foreach (Point rpoint in visited)
+                    {
+                        globalRivers.Add(rpoint);
+                    }
+                }
+            }
+        }
+
+        public static List<Point> globalRivers = new List<Point>();
 
         public static void makeHills()
         {
             foreach (mapPlate plate in plateDB)
             {
-                int hillCount = rd.Next(0, plate.allTiles.Count/2);
+                int hillCount = rd.Next(0, plate.allTiles.Count/25);
                 for (int r = 0; r < hillCount; r++)
                 {
-                    int rangeSize = rd.Next(0, 17);
+                    int rangeSize = rd.Next(0, 40);
                     Vector2 newPoint = plate.allTiles[rd.Next(0, plate.allTiles.Count)];
                     int startHeightBonus = rangeSize;
                     for (int i = 0; i < rangeSize; i++)
@@ -568,7 +845,35 @@ namespace Realistic
                         }
                         if (tileDB[(int)newPoint.x, (int)newPoint.y].landType == 1)
                         {
-                            tileDB[(int)newPoint.x, (int)newPoint.y].height += startHeightBonus - i;
+                            tileDB[(int)newPoint.x, (int)newPoint.y].height += startHeightBonus - rd.Next(0, i);
+                            tileDB[(int)newPoint.x, (int)newPoint.y].height = Math.Max(3, Math.Min(255, tileDB[(int)newPoint.x, (int)newPoint.y].height));
+                            mapImage.SetPixel((int)newPoint.x, (int)newPoint.y, Color.FromArgb(tileDB[(int)newPoint.x, (int)newPoint.y].height, tileDB[(int)newPoint.x, (int)newPoint.y].height, tileDB[(int)newPoint.x, (int)newPoint.y].height));
+                            newPoint = new Vector2((newPoint.x - 1) + rd.Next(0, 3), (newPoint.y - 1) + rd.Next(0, 3));
+                        }
+                    }
+                }
+            }
+        }
+
+        public static void makeValleys()
+        {
+            foreach (mapPlate plate in plateDB)
+            {
+                int valleyCount = rd.Next(0, plate.allTiles.Count/25);
+                for (int r = 0; r < valleyCount; r++)
+                {
+                    int rangeSize = rd.Next(0, 25);
+                    Vector2 newPoint = plate.allTiles[rd.Next(0, plate.allTiles.Count)];
+                    int startHeightBonus = rangeSize;
+                    for (int i = 0; i < rangeSize; i++)
+                    {
+                        if (newPoint.x < 0 || newPoint.x > mapWidth - 1 || newPoint.y < 0 || newPoint.y > mapHeight - 1)
+                        {
+                            continue;
+                        }
+                        if (tileDB[(int)newPoint.x, (int)newPoint.y].landType == 1)
+                        {
+                            tileDB[(int)newPoint.x, (int)newPoint.y].height -= startHeightBonus - rd.Next(0, i);
                             tileDB[(int)newPoint.x, (int)newPoint.y].height = Math.Max(3, Math.Min(255, tileDB[(int)newPoint.x, (int)newPoint.y].height));
                             mapImage.SetPixel((int)newPoint.x, (int)newPoint.y, Color.FromArgb(tileDB[(int)newPoint.x, (int)newPoint.y].height, tileDB[(int)newPoint.x, (int)newPoint.y].height, tileDB[(int)newPoint.x, (int)newPoint.y].height));
                             newPoint = new Vector2((newPoint.x - 1) + rd.Next(0, 3), (newPoint.y - 1) + rd.Next(0, 3));
