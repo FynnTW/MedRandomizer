@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 #if UNITY_2019_1_OR_NEWER
 using UnityEngine;
 #endif
@@ -26,7 +27,6 @@ namespace VoronatorSharp
         /// The initial points Delaunator was constructed with.
         /// </summary>
         public IList<Vector2> Points { get; private set; }
-
 
         /// <summary>
         /// A list of point indices that traverses the hull of the points.
@@ -245,7 +245,6 @@ namespace VoronatorSharp
                     if (start != -1 && start != hullNext[start]) break;
                 }
 
-
                 start = hullPrev[start];
                 var e = start;
                 var q = hullNext[e];
@@ -331,6 +330,7 @@ namespace VoronatorSharp
         }
 
         #region CreationLogic
+
         private int Legalize(int a)
         {
             var i = 0;
@@ -423,6 +423,7 @@ namespace VoronatorSharp
 
             return ar;
         }
+
         private static bool InCircle(double ax, double ay, double bx, double by, double cx, double cy, double px, double py)
         {
             var dx = ax - px;
@@ -440,6 +441,7 @@ namespace VoronatorSharp
                    dy * (ex * cp - bp * fx) +
                    ap * (ex * fy - ey * fx) < 0;
         }
+
         private int AddTriangle(int i0, int i1, int i2, int a, int b, int c)
         {
             var t = trianglesLen;
@@ -455,17 +457,21 @@ namespace VoronatorSharp
             trianglesLen += 3;
             return t;
         }
+
         private void Link(int a, int b)
         {
             Halfedges[a] = b;
             if (b != -1) Halfedges[b] = a;
         }
+
         private int HashKey(double x, double y) => (int)(Math.Floor(PseudoAngle(x - cx, y - cy) * hashSize) % hashSize);
+
         private static double PseudoAngle(double dx, double dy)
         {
             var p = dx / (Math.Abs(dx) + Math.Abs(dy));
             return (dy > 0 ? 3 - p : 1 + p) / 4; // [0..1]
         }
+
         private static void Quicksort(int[] ids, double[] dists, int left, int right)
         {
             if (right - left <= 20)
@@ -513,18 +519,21 @@ namespace VoronatorSharp
                 }
             }
         }
+
         private static void Swap(int[] arr, int i, int j)
         {
             var tmp = arr[i];
             arr[i] = arr[j];
             arr[j] = tmp;
         }
+
         private static bool Orient(double px, double py, double qx, double qy, double rx, double ry)
         {
             // Non-robust orientation
             //return (qy - py) * (rx - qx) - (qx - px) * (ry - qy) < 0;
             return GeometricPredicates.Orient2D(px, py, qx, qy, rx, ry) > 0;
         }
+
         private static double Circumradius(double ax, double ay, double bx, double by, double cx, double cy)
         {
             var dx = bx - ax;
@@ -538,6 +547,7 @@ namespace VoronatorSharp
             var y = (dx * cl - ex * bl) * d;
             return x * x + y * y;
         }
+
         private static Vector2 Circumcenter(float ax, float ay, float bx, float by, float cx, float cy)
         {
             var dx = bx - ax;
@@ -552,15 +562,18 @@ namespace VoronatorSharp
 
             return new Vector2(x, y);
         }
+
         private static double Dist(float ax, float ay, float bx, float by)
         {
             var dx = ax - bx;
             var dy = ay - by;
             return dx * dx + dy * dy;
         }
+
         #endregion CreationLogic
 
         #region GetMethods
+
         /// <summary>
         /// Gets a triangle with the three points around of a given trianle index.
         /// </summary>
@@ -631,11 +644,13 @@ namespace VoronatorSharp
         }
 
         private static IEnumerable<(Vector2, Vector2)> CreateHull(IEnumerable<Vector2> points) => points.Zip(points.Skip(1).Append(points.FirstOrDefault()), (a, b) => (a, b));
+
         public Vector2 GetTriangleCircumcenter(int t)
         {
             var vertices = PointsAroundTriangle(t);
             return GetCircumcenter(vertices.Item1, vertices.Item2, vertices.Item3);
         }
+
         public Vector2 GetCentroid(int t)
         {
             var vertices = PointsAroundTriangle(t);
@@ -647,7 +662,6 @@ namespace VoronatorSharp
         public static Vector2 GetCircumcenter(Vector2 a, Vector2 b, Vector2 c) => Circumcenter(a.x, a.y, b.x, b.y, c.x, c.y);
 
         #endregion GetMethods
-
 
         #region Methods based on index
 
@@ -674,6 +688,7 @@ namespace VoronatorSharp
                 Triangles[edgeIndicies.Item3]
                 );
         }
+
         public IEnumerable<int> TrianglesAdjacentToTriangle(int t)
         {
             var triangleEdges = EdgeIndicesAroundTriangle(t);
@@ -687,9 +702,14 @@ namespace VoronatorSharp
         }
 
         public static int NextHalfedge(int e) => (e % 3 == 2) ? e - 2 : e + 1;
+
         public static int PreviousHalfedge(int e) => (e % 3 == 0) ? e + 2 : e - 1;
+
         public static Triple<int> EdgeIndicesAroundTriangle(int t) => (3 * t, 3 * t + 1, 3 * t + 2);
-        public static int EdgeIndexToTriangleIndex(int e) { return e / 3; }
+
+        public static int EdgeIndexToTriangleIndex(int e)
+        { return e / 3; }
+
         #endregion Methods based on index
     }
 }

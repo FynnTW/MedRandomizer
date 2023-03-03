@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+
 #if UNITY_2019_1_OR_NEWER
 using UnityEngine;
 #endif
+
 using static VoronatorSharp.Delaunator;
 
 namespace VoronatorSharp
@@ -26,22 +27,22 @@ namespace VoronatorSharp
         private List<Vector2> circumcenters;
 
         /// <summary>
-        /// Map from point index to a half edge. 
+        /// Map from point index to a half edge.
         /// The starting half edge is the one with d.Halfedges[e] == -1.
         /// Or an arbitrary choice if there isn't one.
         /// </summary>
         private int[] inedges;
 
         // Vectors holds two vectors for each hull point, indicating the directions of the rays outwards
-        Vector2[] vectors;
+        private Vector2[] vectors;
 
         // Clipping rectangle used for GetClippedPolygon.
-        Vector2 clipMin, clipMax;
+        private Vector2 clipMin, clipMax;
 
         // In collinear situations, gives the normal to the line the cells run in.
         // In this case, we don't use a delaunay triangulation at all.
         // Instead we use Delaunator.Hull which contains an ordered set of vertices.
-        Vector2? collinearNormal;
+        private Vector2? collinearNormal;
 
         public Voronator(IList<Vector2> points, Vector2 clipMin, Vector2 clipMax)
         {
@@ -81,7 +82,7 @@ namespace VoronatorSharp
             // Actually do delauney triangulation
             d = new Delaunator(points.ToArray());
 
-            if(d.Hull.Length > 0 && d.Triangles.Length == 0)
+            if (d.Hull.Length > 0 && d.Triangles.Length == 0)
             {
                 // The points are collinear
                 var first = points[d.Hull[0]];
@@ -102,7 +103,6 @@ namespace VoronatorSharp
                 */
             }
 
-
             // Inverse lookup of hull
             hullIndex = new int[points.Count];
             for (var i = 0; i < hullIndex.Length; ++i)
@@ -113,7 +113,6 @@ namespace VoronatorSharp
             {
                 hullIndex[d.Hull[i]] = i;
             }
-
 
             // Load the vertices of the mesh
             circumcenters = new List<Vector2>();
@@ -174,7 +173,7 @@ namespace VoronatorSharp
         public List<Vector2> GetPolygon(int i)
         {
             var vertices = new List<Vector2>();
-            if(GetPolygon(i, vertices, out var _, out var _))
+            if (GetPolygon(i, vertices, out var _, out var _))
             {
                 return vertices;
             }
@@ -196,7 +195,7 @@ namespace VoronatorSharp
         /// <returns>True if successful</returns>
         public bool GetPolygon(int i, List<Vector2> vertices, out Vector2 ray1, out Vector2 ray2)
         {
-            if(collinearNormal != null)
+            if (collinearNormal != null)
             {
                 // There's nothing sensible to return here except for the ends
                 // of the hull, it's not worth worrying abou
@@ -240,20 +239,20 @@ namespace VoronatorSharp
                 };
             }
 
-            if(collinearNormal != null)
+            if (collinearNormal != null)
             {
                 return ClipCollinear(i);
             }
 
             var points = GetPolygon(i);
             var v = i * 2;
-            if(vectors[v] == default)
+            if (vectors[v] == default)
             {
                 return ClipFinite(i, points);
             }
             else
             {
-                return ClipInfinite(i, points, vectors[v], vectors[v+1]);
+                return ClipInfinite(i, points, vectors[v], vectors[v + 1]);
             }
         }
 
@@ -443,7 +442,7 @@ namespace VoronatorSharp
                 switch (e0)
                 {
                     case 0b0101: e0 = 0b0100; continue; // top-left
-                    case 0b0100: e0 = 0b0110; u = new Vector2(clipMax.x, clipMin.y);  break; // top
+                    case 0b0100: e0 = 0b0110; u = new Vector2(clipMax.x, clipMin.y); break; // top
                     case 0b0110: e0 = 0b0010; continue; // top-right
                     case 0b0010: e0 = 0b1010; u = new Vector2(clipMax.x, clipMax.y); break; // right
                     case 0b1010: e0 = 0b1000; continue; // bottom-right
@@ -584,19 +583,18 @@ namespace VoronatorSharp
                 var dc = (u - points[i]).sqrMagnitude;
 
                 var hi = hullIndex[i];
-                if(hi > 0)
+                if (hi > 0)
                 {
                     var t = d.Hull[hi - 1];
                     var dt = (u - points[t]).sqrMagnitude;
-                    if(dt < dc)
+                    if (dt < dc)
                     {
                         dc = dt;
                         c = t;
                     }
                 }
-                if(hi < d.Hull.Length - 1)
+                if (hi < d.Hull.Length - 1)
                 {
-
                     var t = d.Hull[hi + 1];
                     var dt = (u - points[t]).sqrMagnitude;
                     if (dt < dc)
@@ -682,7 +680,8 @@ namespace VoronatorSharp
             return (v.x < clipMin.x ? 0b0001 : v.x > clipMax.x ? 0b0010 : 0b0000)
                  | (v.y < clipMin.y ? 0b0100 : v.y > clipMax.y ? 0b1000 : 0b0000);
         }
-        #endregion
+
+        #endregion d3-delauney
 
         /// <summary>
         /// Returns the centroid of each voronoi cell.
@@ -737,7 +736,5 @@ namespace VoronatorSharp
             // TODO: Think about this
             return null;
         }
-
-
     }
 }

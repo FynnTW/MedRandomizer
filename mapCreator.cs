@@ -3,44 +3,36 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.AccessControl;
-using System.Security.Cryptography.X509Certificates;
-using System.Windows.Forms;
 using VoronatorSharp;
-using static System.Windows.Forms.AxHost;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ProgressBar;
 
 namespace mapStuff
 {
-    class mapCreator
+    internal class mapCreator
     {
-
         public static int mapWidth = 0;
         public static int mapHeight = 0;
         public static Random rd = new Random(Guid.NewGuid().GetHashCode());
 
-        public static tileEntry[ , ] coordinateGrid;
+        public static tileEntry[,] coordinateGrid;
 
-        static public void CreateMap(int width, int height, int continents)
+        public static void CreateMap(int width, int height, int continents)
         {
             byte[] bytes = CreateGridImage(width, height, continents);
         }
 
-        static public double getDistance(int x, int y, int x2, int y2)
+        public static double getDistance(int x, int y, int x2, int y2)
         {
-            return Math.Sqrt( ((Math.Abs(x2 - x))^2) + ((Math.Abs(y2 - y)) ^ 2));
+            return Math.Sqrt(((Math.Abs(x2 - x)) ^ 2) + ((Math.Abs(y2 - y)) ^ 2));
         }
 
-        static public void tileCalcs(int xPos, int yPos, int x, int y, int width, int height, double distSteps, Bitmap g, int rowDepth)
+        public static void tileCalcs(int xPos, int yPos, int x, int y, int width, int height, double distSteps, Bitmap g, int rowDepth)
         {
             if (xPos < width && yPos < height && xPos >= 0 && yPos >= 0)
             {
                 double landW = landCheck(xPos, yPos);
                 double dist = getDistance(xPos, yPos, x, y);
-                double wChance = (50 - (dist/distSteps)) + (landW * 8);
+                double wChance = (50 - (dist / distSteps)) + (landW * 8);
                 double perc = getPercent();
                 if (wChance > perc)
                 {
@@ -56,16 +48,17 @@ namespace mapStuff
                 }
             }
         }
+
         public static int contWidth = 500;
 
-        static public void drawContinent(int x, int y, Bitmap g, int width, int height)
+        public static void drawContinent(int x, int y, Bitmap g, int width, int height)
         {
             drawGroundTile(x, y, g, 0, 0);
             int xPos = x;
             int yPos = y;
             int rowDepth = 1;
             double distSteps = contWidth / 100;
-            for (int i = 0; i < contWidth*2; i++)
+            for (int i = 0; i < contWidth * 2; i++)
             {
                 for (int h = 0; h < rowDepth; h++)
                 {
@@ -107,66 +100,64 @@ namespace mapStuff
                     yPos += rd.Next(-1, 1);
                 }
             }
-
         }
 
-        static public double landCheck(int x, int y)
+        public static double landCheck(int x, int y)
         {
             double landTiles = 0;
             try
             {
-
-                if (coordinateGrid[x-1, y-1].tileType == 1)
+                if (coordinateGrid[x - 1, y - 1].tileType == 1)
                 {
                     landTiles++;
                 }
-                if (coordinateGrid[x,y-1].tileType == 1)
+                if (coordinateGrid[x, y - 1].tileType == 1)
                 {
                     landTiles++;
                 }
-                if (coordinateGrid[x+1,y-1].tileType == 1)
+                if (coordinateGrid[x + 1, y - 1].tileType == 1)
                 {
                     landTiles++;
                 }
-                if (coordinateGrid[x - 1,y].tileType == 1)
+                if (coordinateGrid[x - 1, y].tileType == 1)
                 {
                     landTiles++;
                 }
-                if (coordinateGrid[x,y].tileType == 1)
+                if (coordinateGrid[x, y].tileType == 1)
                 {
                     landTiles++;
                 }
-                if (coordinateGrid[x+1,y].tileType == 1)
+                if (coordinateGrid[x + 1, y].tileType == 1)
                 {
                     landTiles++;
                 }
-                if (coordinateGrid[x - 1,y+1].tileType == 1)
+                if (coordinateGrid[x - 1, y + 1].tileType == 1)
                 {
                     landTiles++;
                 }
-                if (coordinateGrid[x,y + 1].tileType == 1)
+                if (coordinateGrid[x, y + 1].tileType == 1)
                 {
                     landTiles++;
                 }
-                if (coordinateGrid[x+1,y + 1].tileType == 1)
+                if (coordinateGrid[x + 1, y + 1].tileType == 1)
                 {
                     landTiles++;
                 }
-            } catch(Exception e)
+            }
+            catch (Exception e)
             {
                 return landTiles;
             }
             return landTiles;
-
         }
 
-        static public void drawContinentLines(int x, int y, Bitmap g, int width, int height)
+        public static void drawContinentLines(int x, int y, Bitmap g, int width, int height)
         {
             double weight = 1.0;
             drawGroundTile(x, y, g, 0, 0);
-            int mainlines = rd.Next(3, contWidth/5);
+            int mainlines = rd.Next(3, contWidth / 5);
             landLine[] mainLinesArray = new landLine[mainlines];
-            for (int i = 0;i < mainlines;i++)
+            for (int i = 0; i < mainlines; i++)
             {
                 weight = 1.0;
                 landLine newLine = randomLine(x, y, weight, g);
@@ -174,7 +165,7 @@ namespace mapStuff
                 drawLine(mainLinesArray[i], g);
                 while (weight > 0)
                 {
-                    for (int j = 0;j < newLine.subLines;j++)
+                    for (int j = 0; j < newLine.subLines; j++)
                     {
                         int newX = rd.Next(Math.Min(newLine.startX, newLine.endX), Math.Max(newLine.startX, newLine.endX));
                         int newY = GetY(Math.Min(newLine.startX, newLine.endX), Math.Min(newLine.startY, newLine.endY), Math.Max(newLine.startX, newLine.endX), Math.Max(newLine.startY, newLine.endY), newX);
@@ -202,7 +193,7 @@ namespace mapStuff
             return m * x + b;
         }
 
-        static public landLine randomLine(int x, int y, double weight, Bitmap g)
+        public static landLine randomLine(int x, int y, double weight, Bitmap g)
         {
             double dist = rd.Next(1, contWidth) * weight;
             double angle = rd.Next(1, 360);
@@ -210,11 +201,11 @@ namespace mapStuff
             double endX = x + dist * Math.Cos(angle);
             double endY = y + dist * Math.Sin(angle);
             double curve = dist * rd.NextDouble() / 2;
-            landLine newLine = new landLine((int)endX, (int)endY, x, y, (int)(rd.Next(0, (int)dist /4) * weight), 0, subLines, (int)dist, (int)angle);
+            landLine newLine = new landLine((int)endX, (int)endY, x, y, (int)(rd.Next(0, (int)dist / 4) * weight), 0, subLines, (int)dist, (int)angle);
             return newLine;
         }
 
-        static public void drawLine(landLine line, Bitmap bmp)
+        public static void drawLine(landLine line, Bitmap bmp)
         {
             if (line.thickness > 0)
             {
@@ -236,7 +227,7 @@ namespace mapStuff
                         endY += (increments + rd.Next(0, 5) - rd.Next(0, 5)) * Math.Sin(line.angle + rd.Next(0, 30) - rd.Next(0, 30));
                         landPen.Width--;
                         graphics.DrawLine(landPen, (float)startX, (float)startY, (float)endX, (float)endY);
-                    }   
+                    }
                 }
             }
         }
@@ -261,31 +252,32 @@ namespace mapStuff
                 this.startY = startY;
                 this.thickness = thickness;
                 this.curve = curve;
-                this.subLines= subLines;
-                this.dist= dist;
-                this.angle= angle;
+                this.subLines = subLines;
+                this.dist = dist;
+                this.angle = angle;
             }
         }
 
-        static public double getPercent()
+        public static double getPercent()
         {
             return rd.Next(100);
         }
 
-        static public void drawGroundTile(int x, int y, Bitmap g, double dist, int rowDepth)
+        public static void drawGroundTile(int x, int y, Bitmap g, double dist, int rowDepth)
         {
-            Color color = Color.FromArgb(Math.Min(255, (0 + rowDepth)), Math.Max(0,(255- rowDepth)), 0);
+            Color color = Color.FromArgb(Math.Min(255, (0 + rowDepth)), Math.Max(0, (255 - rowDepth)), 0);
             g.SetPixel(x, y, Color.Green);
-            coordinateGrid[x,y].tileType = 1;
+            coordinateGrid[x, y].tileType = 1;
         }
-        static public void drawSeaTile(int x, int y, Bitmap g)
+
+        public static void drawSeaTile(int x, int y, Bitmap g)
         {
             g.SetPixel(x, y, Color.Blue);
             coordinateGrid[x, y].tileType = 1;
-            coordinateGrid[x,y].tileType = 0;
+            coordinateGrid[x, y].tileType = 0;
         }
 
-        static public void tileTable(int w, int h)
+        public static void tileTable(int w, int h)
         {
             coordinateGrid = new tileEntry[w, h];
             for (int i = 0; i < w; i++)
@@ -296,12 +288,12 @@ namespace mapStuff
                     tile.y = j;
                     tile.x = i;
                     tile.tileType = 0;
-                    coordinateGrid[i,j] = tile;
+                    coordinateGrid[i, j] = tile;
                 }
             }
         }
 
-        class coordPoints
+        private class coordPoints
         {
             public int x;
             public int y;
@@ -316,12 +308,13 @@ namespace mapStuff
 
         public static int regionCount = 199;
         public static Vector2[] points = new Vector2[regionCount];
+
         public static byte[] CreateGridImage(int maxXCells, int maxYCells, int continents)
         {
             tileTable(maxXCells, maxYCells);
             coordPoints[] continentPoints = new coordPoints[continents];
             Random rd = new Random();
-            for (int i = 0;i < continents;i++)
+            for (int i = 0; i < continents; i++)
             {
                 coordPoints point = new coordPoints();
                 point.x = rd.Next(0, maxXCells);
@@ -371,7 +364,7 @@ namespace mapStuff
                             newbmp.SetPixel(x, y, newbmp.GetPixel(x + 1, y));
                         }
                     }
-                    for (int i = 0;i < newbmp.Width;i++)
+                    for (int i = 0; i < newbmp.Width; i++)
                     {
                         for (int j = 0; j < newbmp.Height; j++)
                         {
@@ -399,7 +392,7 @@ namespace mapStuff
 
                     foreach (tileEntry tile in coordinateGrid)
                     {
-                        if (tile.tileType == 1) 
+                        if (tile.tileType == 1)
                         {
                             landTiles.Add(tile);
                         }
@@ -507,7 +500,7 @@ namespace mapStuff
                                 }
                             }
                             printlooper++;
-                            if (printlooper > maxXCells*40)
+                            if (printlooper > maxXCells * 40)
                             {
                                 printlooper = 0;
                                 try
@@ -521,17 +514,17 @@ namespace mapStuff
                             }
                         }
                     }
-                    for (int i = 0; i < maxXCells;i++)
+                    for (int i = 0; i < maxXCells; i++)
                     {
-                        for (int j = 0; j < maxYCells;j++)
+                        for (int j = 0; j < maxYCells; j++)
                         {
-                            if (coordinateGrid[i,j].tileType == 0)
+                            if (coordinateGrid[i, j].tileType == 0)
                             {
                                 platebmp.SetPixel(i, j, Color.Blue);
                             }
                         }
                     }
-                    foreach (Vector2 point in points )
+                    foreach (Vector2 point in points)
                     {
                         platebmp.SetPixel((int)point.x, (int)point.y, Color.Black);
                     }
@@ -544,11 +537,11 @@ namespace mapStuff
                         platebmp.Save("myMapPlates.tif", ImageFormat.Tiff);
                     }
 
-
                     return memStream.ToArray();
                 }
             }
         }
+
         public static void Shuffle<T>(Random rng, T[] array)
         {
             int n = array.Length;
@@ -563,7 +556,6 @@ namespace mapStuff
 
         public static int blurLength = 20;
         public static double blurWeight = 50;
-
 
         public static double[,] GaussianBlur(int lenght, double weight)
         {
@@ -652,9 +644,5 @@ namespace mapStuff
             resultImage.UnlockBits(resultData);
             return resultImage;
         }
-
-
-
     }
-
 }

@@ -1,4 +1,5 @@
 ﻿#region License
+
 // License for this implementation in C#:
 // --------------------------------------
 //
@@ -25,35 +26,36 @@
 //
 // License from original C source version:
 // ---------------------------------------
-//                                                                           
-//  Routines for Arbitrary Precision Floating-point Arithmetic               
-//  and Fast Robust Geometric Predicates                                     
-//  (predicates.c)                                                           
-//                                                                           
-//  May 18, 1996                                                             
-//                                                                           
-//  Placed in the public domain by                                           
-//  Jonathan Richard Shewchuk                                                
-//  School of Computer Science                                               
-//  Carnegie Mellon University                                               
-//  5000 Forbes Avenue                                                       
-//  Pittsburgh, Pennsylvania  15213-3891                                     
-//  jrs@cs.cmu.edu                                                           
-//                                                                           
-//  This file contains C implementation of algorithms for exact addition     
-//    and multiplication of floating-point numbers, and predicates for       
-//    robustly performing the orientation and incircle tests used in         
-//    computational geometry.  The algorithms and underlying theory are      
-//    described in Jonathan Richard Shewchuk.  "Adaptive Precision Floating- 
-//    Point Arithmetic and Fast Robust Geometric Predicates."  Technical     
-//    Report CMU-CS-96-140, School of Computer Science, Carnegie Mellon      
-//    University, Pittsburgh, Pennsylvania, May 1996.  (Submitted to         
-//    Discrete & Computational Geometry.)                                    
-//                                                                           
-//  This file, the paper listed above, and other information are available   
-//    from the Web page http://www.cs.cmu.edu/~quake/robust.html .           
-//                                                                           
+//
+//  Routines for Arbitrary Precision Floating-point Arithmetic
+//  and Fast Robust Geometric Predicates
+//  (predicates.c)
+//
+//  May 18, 1996
+//
+//  Placed in the public domain by
+//  Jonathan Richard Shewchuk
+//  School of Computer Science
+//  Carnegie Mellon University
+//  5000 Forbes Avenue
+//  Pittsburgh, Pennsylvania  15213-3891
+//  jrs@cs.cmu.edu
+//
+//  This file contains C implementation of algorithms for exact addition
+//    and multiplication of floating-point numbers, and predicates for
+//    robustly performing the orientation and incircle tests used in
+//    computational geometry.  The algorithms and underlying theory are
+//    described in Jonathan Richard Shewchuk.  "Adaptive Precision Floating-
+//    Point Arithmetic and Fast Robust Geometric Predicates."  Technical
+//    Report CMU-CS-96-140, School of Computer Science, Carnegie Mellon
+//    University, Pittsburgh, Pennsylvania, May 1996.  (Submitted to
+//    Discrete & Computational Geometry.)
+//
+//  This file, the paper listed above, and other information are available
+//    from the Web page http://www.cs.cmu.edu/~quake/robust.html .
+//
 //-------------------------------------------------------------------------
+
 #endregion
 
 namespace VoronatorSharp
@@ -64,6 +66,7 @@ namespace VoronatorSharp
     internal static class ExactArithmetic
     {
         #region Basic arithmetic - Sum, Diff and Product
+
         // Only valid if |a| >= |b|
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
         public static void FastTwoSum(double a, double b, out double x, out double y)
@@ -71,6 +74,7 @@ namespace VoronatorSharp
             x = a + b;
             FastTwoSumTail(a, b, x, out y);
         }
+
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
         public static void FastTwoSumTail(double a, double b, double x, out double y)
         {
@@ -85,6 +89,7 @@ namespace VoronatorSharp
             x = a - b;
             FastTwoDiffTail(a, b, x, out y);
         }
+
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
         public static void FastTwoDiffTail(double a, double b, double x, out double y)
         {
@@ -203,14 +208,16 @@ namespace VoronatorSharp
             err3 = err1 - ((ahi + ahi) * alo);
             y = (alo * alo) - err3;
         }
+
         #endregion
 
         #region Summing expansions of various fixed lengths
+
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
         public static void TwoOneSum(double a1, double a0, double b, out double x2, out double x1, out double x0)
         {
             double _i;
-            TwoSum(a0, b , out _i, out x0);
+            TwoSum(a0, b, out _i, out x0);
             TwoSum(a1, _i, out x2, out x1);
         }
 
@@ -234,7 +241,7 @@ namespace VoronatorSharp
         public static void TwoTwoDiff(double a1, double a0, double b1, double b0, out double x3, out double x2, out double x1, out double x0)
         {
             double _j, _0;
-            TwoOneDiff(a1, a0, b0, out _j, out _0, out x0); 
+            TwoOneDiff(a1, a0, b0, out _j, out _0, out x0);
             TwoOneDiff(_j, _0, b1, out x3, out x2, out x1);
         }
 
@@ -255,7 +262,7 @@ namespace VoronatorSharp
         }
 
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
-        public static void FourFourSum(double a3, double a2, double a1, double a0, double b4, double b3, double b1, double b0, 
+        public static void FourFourSum(double a3, double a2, double a1, double a0, double b4, double b3, double b1, double b0,
                     out double x7, out double x6, out double x5, out double x4, out double x3, out double x2, out double x1, out double x0)
         {
             double _l, _2, _1, _0;
@@ -264,7 +271,7 @@ namespace VoronatorSharp
         }
 
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
-        public static void EightOneSum(double a7, double a6, double a5, double a4, double a3, double a2, double a1, double a0, double b, 
+        public static void EightOneSum(double a7, double a6, double a5, double a4, double a3, double a2, double a1, double a0, double b,
                     out double x8, out double x7, out double x6, out double x5, out double x4, out double x3, out double x2, out double x1, out double x0)
         {
             double _j;
@@ -273,7 +280,7 @@ namespace VoronatorSharp
         }
 
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
-        public static void EightTwoSum(double a7, double a6, double a5, double a4, double a3, double a2, double a1, double a0, double b1, double b0, 
+        public static void EightTwoSum(double a7, double a6, double a5, double a4, double a3, double a2, double a1, double a0, double b1, double b0,
             out double x9, out double x8, out double x7, out double x6, out double x5, out double x4, out double x3, out double x2, out double x1, out double x0)
         {
             double _k, _6, _5, _4, _3, _2, _1, _0;
@@ -282,16 +289,18 @@ namespace VoronatorSharp
         }
 
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
-        public static void EightFourSum(double a7, double a6, double a5, double a4, double a3, double a2, double a1, double a0, double b4, double b3, double b1, double b0, 
+        public static void EightFourSum(double a7, double a6, double a5, double a4, double a3, double a2, double a1, double a0, double b4, double b3, double b1, double b0,
             out double x11, out double x10, out double x9, out double x8, out double x7, out double x6, out double x5, out double x4, out double x3, out double x2, out double x1, out double x0)
         {
             double _l, _6, _5, _4, _3, _2, _1, _0;
             EightTwoSum(a7, a6, a5, a4, a3, a2, a1, a0, b1, b0, out _l, out _6, out _5, out _4, out _3, out _2, out _1, out _0, out x1, out x0);
             EightTwoSum(_l, _6, _5, _4, _3, _2, _1, _0, b4, b3, out x11, out x10, out x9, out x8, out x7, out x6, out x5, out x4, out x3, out x2);
         }
+
         #endregion
 
         #region Multiplying expansions of various lengths
+
         // [MethodImplOptions(MethodImplOptions.AggressiveInlining)]
         public static void TwoOneProduct(double a1, double a0, double b, out double x3, out double x2, out double x1, out double x0)
         {
@@ -364,9 +373,11 @@ namespace VoronatorSharp
             Square(a1, out _j, out _1);
             TwoTwoSum(_j, _1, _l, _2, out x5, out x4, out x3, out x2);
         }
+
         #endregion
 
         #region Expansion arithmetic - ExpansionSum, ScaleExpansion and helpers
+
         // Algorithm Grow-Expansion (Shewchuk p. 10)
         // NOTE: This algorithm is not actually used further, but good for checking the S. paper.
         // Adds a single value to an expansion - predicates version
@@ -435,7 +446,7 @@ namespace VoronatorSharp
             double enow, fnow;
 
             // We traverse the lists e and f together. moving from small to large magnitude
-            // enow and fnow keep track of the current value in each list, 
+            // enow and fnow keep track of the current value in each list,
             // and eindex and findex the current index
             enow = e[0];
             fnow = f[0];
@@ -463,9 +474,9 @@ namespace VoronatorSharp
 
             // Start adding entries into h, carrying Q
             hindex = 0;
-            
+
             // Check whether we still have entries in both lists
-            if ((eindex < elen) && (findex < flen)) 
+            if ((eindex < elen) && (findex < flen))
             {
                 // Note we have an extra 'unrolled' step here, where we are allowed to use FastTwoSum
                 // This is becuase we know the next expansion entry is smaller than Q (according to how Q was picked above)
@@ -478,8 +489,8 @@ namespace VoronatorSharp
                     // Add e and advance eindex
                     FastTwoSum(enow, Q, out Qnew, out h[0]);
                     eindex++;
-                } 
-                else 
+                }
+                else
                 {
                     // Add f and advance findex
                     FastTwoSum(fnow, Q, out Qnew, out h[0]);
@@ -488,7 +499,7 @@ namespace VoronatorSharp
                 Q = Qnew;
                 hindex = 1;
                 // While we still have entries in both lists
-                while ((eindex < elen) && (findex < flen)) 
+                while ((eindex < elen) && (findex < flen))
                 {
                     // Can no longer use FastTwoSum - use TwoSum
                     enow = e[eindex];
@@ -499,8 +510,8 @@ namespace VoronatorSharp
                     {
                         TwoSum(Q, enow, out Qnew, out h[hindex]);
                         eindex++;
-                    } 
-                    else 
+                    }
+                    else
                     {
                         TwoSum(Q, fnow, out Qnew, out h[hindex]);
                         findex++;
@@ -510,7 +521,7 @@ namespace VoronatorSharp
                 }
             }
             // Now we have exhausted one of the lists
-            // For the rest, we just run along the list that has values left, 
+            // For the rest, we just run along the list that has values left,
             //    no more tests to try to pull from the correct list
             while (eindex < elen)
             {
@@ -548,7 +559,7 @@ namespace VoronatorSharp
             double enow, fnow;
 
             // We traverse the lists e and f together. moving from small to large magnitude
-            // enow and fnow keep track of the current value in each list, 
+            // enow and fnow keep track of the current value in each list,
             // and eindex and findex the current index
             enow = e[0];
             fnow = f[0];
@@ -629,7 +640,7 @@ namespace VoronatorSharp
                 }
             }
             // Now we have exhausted one of the lists
-            // For the rest, we just run along the list that has values left, 
+            // For the rest, we just run along the list that has values left,
             //    no more tests to try to pull from the correct list
             while (eindex < elen)
             {
@@ -687,9 +698,9 @@ namespace VoronatorSharp
                 TwoProductPresplit(enow, b, bhi, blo, out product1, out product0);
                 TwoSum(Q, product0, out sum, out h[hindex]);
                 hindex++;
-                // NOTE: Next step is indicated (and proven safe) as FastTwoSum in the S. paper, 
+                // NOTE: Next step is indicated (and proven safe) as FastTwoSum in the S. paper,
                 // but TwoSum is used in predicates.c
-                FastTwoSum(product1, sum, out Q, out h[hindex]); 
+                FastTwoSum(product1, sum, out Q, out h[hindex]);
                 hindex++;
             }
             h[hindex] = Q;
@@ -798,6 +809,7 @@ namespace VoronatorSharp
             h[top] = Q;
             return top + 1;
         }
+
         #endregion
     }
 }

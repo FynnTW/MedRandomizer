@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
+﻿using Realistic;
+using System;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Realistic;
 
 namespace MedRandomizer
 {
@@ -26,6 +20,10 @@ namespace MedRandomizer
         private void mapWindow_FormClosing(object sender, FormClosingEventArgs e)
         {
             e.Cancel = true;
+        }
+
+        private void mapWindow_Load(object sender, EventArgs e)
+        {
         }
     }
 }

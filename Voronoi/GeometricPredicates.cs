@@ -1,4 +1,5 @@
 ﻿#region License
+
 // License for this implementation in C#:
 // --------------------------------------
 //
@@ -25,35 +26,36 @@
 //
 // License from original C source version:
 // ---------------------------------------
-//                                                                           
-//  Routines for Arbitrary Precision Floating-point Arithmetic               
-//  and Fast Robust Geometric Predicates                                     
-//  (predicates.c)                                                           
-//                                                                           
-//  May 18, 1996                                                             
-//                                                                           
-//  Placed in the public domain by                                           
-//  Jonathan Richard Shewchuk                                                
-//  School of Computer Science                                               
-//  Carnegie Mellon University                                               
-//  5000 Forbes Avenue                                                       
-//  Pittsburgh, Pennsylvania  15213-3891                                     
-//  jrs@cs.cmu.edu                                                           
-//                                                                           
-//  This file contains C implementation of algorithms for exact addition     
-//    and multiplication of floating-point numbers, and predicates for       
-//    robustly performing the orientation and incircle tests used in         
-//    computational geometry.  The algorithms and underlying theory are      
-//    described in Jonathan Richard Shewchuk.  "Adaptive Precision Floating- 
-//    Point Arithmetic and Fast Robust Geometric Predicates."  Technical     
-//    Report CMU-CS-96-140, School of Computer Science, Carnegie Mellon      
-//    University, Pittsburgh, Pennsylvania, May 1996.  (Submitted to         
-//    Discrete & Computational Geometry.)                                    
-//                                                                           
-//  This file, the paper listed above, and other information are available   
-//    from the Web page http://www.cs.cmu.edu/~quake/robust.html .           
-//                                                                           
+//
+//  Routines for Arbitrary Precision Floating-point Arithmetic
+//  and Fast Robust Geometric Predicates
+//  (predicates.c)
+//
+//  May 18, 1996
+//
+//  Placed in the public domain by
+//  Jonathan Richard Shewchuk
+//  School of Computer Science
+//  Carnegie Mellon University
+//  5000 Forbes Avenue
+//  Pittsburgh, Pennsylvania  15213-3891
+//  jrs@cs.cmu.edu
+//
+//  This file contains C implementation of algorithms for exact addition
+//    and multiplication of floating-point numbers, and predicates for
+//    robustly performing the orientation and incircle tests used in
+//    computational geometry.  The algorithms and underlying theory are
+//    described in Jonathan Richard Shewchuk.  "Adaptive Precision Floating-
+//    Point Arithmetic and Fast Robust Geometric Predicates."  Technical
+//    Report CMU-CS-96-140, School of Computer Science, Carnegie Mellon
+//    University, Pittsburgh, Pennsylvania, May 1996.  (Submitted to
+//    Discrete & Computational Geometry.)
+//
+//  This file, the paper listed above, and other information are available
+//    from the Web page http://www.cs.cmu.edu/~quake/robust.html .
+//
 //-------------------------------------------------------------------------
+
 #endregion
 
 using System;
@@ -64,36 +66,39 @@ namespace VoronatorSharp
 
     /// <summary>
     /// Implements the four geometric predicates described by Shewchuck, and implemented in predicates.c.
-    /// For each predicate, exports a ~Fast version that is a non-robust implementation directly with double arithmetic, 
+    /// For each predicate, exports a ~Fast version that is a non-robust implementation directly with double arithmetic,
     /// an ~Exact version which completed the full calculation in exact arithmetic, and the preferred version which
     /// implements the adaptive routines returning the correct sign and an approximate value.
     /// </summary>
     public static class GeometricPredicates
     {
         #region Error bounds
-        // epsilon is equal to Math.Pow(2.0, -53) and is the largest power of 
+
+        // epsilon is equal to Math.Pow(2.0, -53) and is the largest power of
         // two that 1.0 + epsilon = 1.0.
         // NOTE: Don't confuse this with double.Epsilon.
-        const double epsilon = 1.1102230246251565E-16; 
+        private const double epsilon = 1.1102230246251565E-16;
 
         // Error bounds for orientation and incircle tests.
-        const double resulterrbound = (3.0 + 8.0 * epsilon) * epsilon;
-        const double ccwerrboundA = (3.0 + 16.0 * epsilon) * epsilon;
-        const double ccwerrboundB = (2.0 + 12.0 * epsilon) * epsilon;
-        const double ccwerrboundC = (9.0 + 64.0 * epsilon) * epsilon * epsilon;
-        const double o3derrboundA = (7.0 + 56.0 * epsilon) * epsilon;
-        const double o3derrboundB = (3.0 + 28.0 * epsilon) * epsilon;
-        const double o3derrboundC = (26.0 + 288.0 * epsilon) * epsilon * epsilon;
-        const double iccerrboundA = (10.0 + 96.0 * epsilon) * epsilon;
-        const double iccerrboundB = (4.0 + 48.0 * epsilon) * epsilon;
-        const double iccerrboundC = (44.0 + 576.0 * epsilon) * epsilon * epsilon;
-        const double isperrboundA = (16.0 + 224.0 * epsilon) * epsilon;
-        const double isperrboundB = (5.0 + 72.0 * epsilon) * epsilon;
-        const double isperrboundC = (71.0 + 1408.0 * epsilon) * epsilon * epsilon;
-        
+        private const double resulterrbound = (3.0 + 8.0 * epsilon) * epsilon;
+
+        private const double ccwerrboundA = (3.0 + 16.0 * epsilon) * epsilon;
+        private const double ccwerrboundB = (2.0 + 12.0 * epsilon) * epsilon;
+        private const double ccwerrboundC = (9.0 + 64.0 * epsilon) * epsilon * epsilon;
+        private const double o3derrboundA = (7.0 + 56.0 * epsilon) * epsilon;
+        private const double o3derrboundB = (3.0 + 28.0 * epsilon) * epsilon;
+        private const double o3derrboundC = (26.0 + 288.0 * epsilon) * epsilon * epsilon;
+        private const double iccerrboundA = (10.0 + 96.0 * epsilon) * epsilon;
+        private const double iccerrboundB = (4.0 + 48.0 * epsilon) * epsilon;
+        private const double iccerrboundC = (44.0 + 576.0 * epsilon) * epsilon * epsilon;
+        private const double isperrboundA = (16.0 + 224.0 * epsilon) * epsilon;
+        private const double isperrboundB = (5.0 + 72.0 * epsilon) * epsilon;
+        private const double isperrboundC = (71.0 + 1408.0 * epsilon) * epsilon * epsilon;
+
         #endregion
 
         #region Orient2D
+
         /// <summary>
         /// Non-robust approximate 2D orientation test.
         /// </summary>
@@ -101,9 +106,9 @@ namespace VoronatorSharp
         /// <param name="pb">array with x and y coordinates of pb.</param>
         /// <param name="pc">array with x and y coordinates of pc.</param>
         /// <returns>a positive value if the points pa, pb, and pc occur
-        /// in counterclockwise order; a negative value if they occur in 
-        /// clockwise order; and zero if they are collinear. 
-        /// The result is also a rough aproximation of twice the signed 
+        /// in counterclockwise order; a negative value if they occur in
+        /// clockwise order; and zero if they are collinear.
+        /// The result is also a rough aproximation of twice the signed
         /// area of the triangle defined by the three points.</returns>
         /// <remarks>The implementation computed the determinant using simple double arithmetic.</remarks>
         public static double Orient2DFast(double[] pa, double[] pb, double[] pc)
@@ -114,7 +119,7 @@ namespace VoronatorSharp
             bcx = pb[0] - pc[0];
             acy = pa[1] - pc[1];
             bcy = pb[1] - pc[1];
-            return acx * bcy - acy * bcx; 
+            return acx * bcy - acy * bcx;
         }
 
         internal static double Orient2DExact(double[] pa, double[] pb, double[] pc)
@@ -147,7 +152,7 @@ namespace VoronatorSharp
             vlength = EA.FastExpansionSumZeroElim(4, aterms, 4, bterms, v);
             wlength = EA.FastExpansionSumZeroElim(vlength, v, 4, cterms, w);
 
-            // In S. predicates.c, this returns the largest component: 
+            // In S. predicates.c, this returns the largest component:
             // return w[wlength - 1];
             // However, this is not stable due to the expansions not being unique,
             // So we return the summed estimate as the 'Exact' value.
@@ -184,7 +189,7 @@ namespace VoronatorSharp
 
             deterlen = EA.FastExpansionSumZeroElim(8, axby, 8, bxay, deter);
 
-            // In S. predicates.c, this returns the largest component: 
+            // In S. predicates.c, this returns the largest component:
             // deter[deterlen - 1];
             // However, this is not stable due to the expansions not being unique (even for ZeroElim),
             // So we return the summed estimate as the 'Exact' value.
@@ -198,9 +203,9 @@ namespace VoronatorSharp
         /// <param name="pb">array with x and y coordinates of pb.</param>
         /// <param name="pc">array with x and y coordinates of pc.</param>
         /// <returns>a positive value if the points pa, pb, and pc occur
-        /// in counterclockwise order; a negative value if they occur in 
-        /// clockwise order; and zero if they are collinear. 
-        /// The result is also an aproximation of twice the signed 
+        /// in counterclockwise order; a negative value if they occur in
+        /// clockwise order; and zero if they are collinear.
+        /// The result is also an aproximation of twice the signed
         /// area of the triangle defined by the three points.</returns>
         public static double Orient2D(double[] pa, double[] pb, double[] pc)
         {
@@ -214,9 +219,9 @@ namespace VoronatorSharp
         /// <param name="pb">array with x and y coordinates of pb.</param>
         /// <param name="pc">array with x and y coordinates of pc.</param>
         /// <returns>a positive value if the points pa, pb, and pc occur
-        /// in counterclockwise order; a negative value if they occur in 
-        /// clockwise order; and zero if they are collinear. 
-        /// The result is also an aproximation of twice the signed 
+        /// in counterclockwise order; a negative value if they occur in
+        /// clockwise order; and zero if they are collinear.
+        /// The result is also an aproximation of twice the signed
         /// area of the triangle defined by the three points.</returns>
         public static double Orient2D(double pax, double pay, double pbx, double pby, double pcx, double pcy)
         {
@@ -227,35 +232,35 @@ namespace VoronatorSharp
             detright = (pay - pcy) * (pbx - pcx);
             det = detleft - detright;
 
-            if (detleft > 0.0) 
+            if (detleft > 0.0)
             {
-                if (detright <= 0.0) 
+                if (detright <= 0.0)
                 {
                     return det;
-                } 
-                else 
+                }
+                else
                 {
                     detsum = detleft + detright;
                 }
-            } 
-            else if (detleft < 0.0) 
+            }
+            else if (detleft < 0.0)
             {
-                if (detright >= 0.0) 
+                if (detright >= 0.0)
                 {
                     return det;
-                } 
-                else 
+                }
+                else
                 {
                     detsum = -detleft - detright;
                 }
-            } 
-            else 
+            }
+            else
             {
                 return det;
             }
 
             errbound = ccwerrboundA * detsum;
-            if ((det >= errbound) || (-det >= errbound)) 
+            if ((det >= errbound) || (-det >= errbound))
             {
                 return det;
             }
@@ -264,7 +269,7 @@ namespace VoronatorSharp
         }
 
         // Internal adaptive continuation
-        static double Orient2DAdapt(double pax, double pay, double pbx, double pby, double pcx, double pcy, double detsum)
+        private static double Orient2DAdapt(double pax, double pay, double pbx, double pby, double pcx, double pcy, double detsum)
         {
             double acx, acy, bcx, bcy;
             double acxtail, acytail, bcxtail, bcytail;
@@ -344,7 +349,7 @@ namespace VoronatorSharp
         #endregion
 
         #region Orient3D
-        
+
         /*****************************************************************************/
         /*                                                                           */
         /*  orient3dfast()   Approximate 3D orientation test.  Nonrobust.            */
@@ -473,7 +478,7 @@ namespace VoronatorSharp
             cdlen = EA.FastExpansionSumZeroElim(clen, cdet, dlen, ddet, cddet);
             deterlen = EA.FastExpansionSumZeroElim(ablen, abdet, cdlen, cddet, deter);
 
-            // In S. predicates.c, this returns the largest component: 
+            // In S. predicates.c, this returns the largest component:
             // deter[deterlen - 1];
             // However, this is not stable due to the expansions not being unique (even for ZeroElim),
             // So we return the summed estimate as the 'Exact' value.
@@ -534,7 +539,7 @@ namespace VoronatorSharp
             negate = -bdy;
             negatetail = -bdytail;
             EA.TwoTwoProduct(cdx, cdxtail, negate, negatetail,
-                            out cxby7, out cxby[6], out cxby[5],out cxby[4],
+                            out cxby7, out cxby[6], out cxby[5], out cxby[4],
                             out cxby[3], out cxby[2], out cxby[1], out cxby[0]);
             cxby[7] = cxby7;
             EA.TwoTwoProduct(cdx, cdxtail, ady, adytail,
@@ -566,7 +571,7 @@ namespace VoronatorSharp
             ablen = EA.FastExpansionSumZeroElim(alen, adet, blen, bdet, abdet);
             deterlen = EA.FastExpansionSumZeroElim(ablen, abdet, clen, cdet, deter);
 
-            // In S. predicates.c, this returns the largest component: 
+            // In S. predicates.c, this returns the largest component:
             // deter[deterlen - 1];
             // However, this is not stable due to the expansions not being unique (even for ZeroElim),
             // So we return the summed estimate as the 'Exact' value.
@@ -599,7 +604,7 @@ namespace VoronatorSharp
             adxbdy = adx * bdy;
             bdxady = bdx * ady;
 
-            det = adz * (bdxcdy - cdxbdy) 
+            det = adz * (bdxcdy - cdxbdy)
                 + bdz * (cdxady - adxcdy)
                 + cdz * (adxbdy - bdxady);
 
@@ -608,7 +613,7 @@ namespace VoronatorSharp
                     + (Math.Abs(adxbdy) + Math.Abs(bdxady)) * Math.Abs(cdz);
             errbound = o3derrboundA * permanent;
 
-            if ((det > errbound) || (-det > errbound)) 
+            if ((det > errbound) || (-det > errbound))
             {
                 return det;
             }
@@ -617,7 +622,7 @@ namespace VoronatorSharp
         }
 
         // Adaptive continuation for Orient3D
-        static double Orient3DAdapt(double[] pa, double[] pb, double[] pc, double[] pd, double permanent)
+        private static double Orient3DAdapt(double[] pa, double[] pb, double[] pc, double[] pd, double permanent)
         {
             double adx, bdx, cdx, ady, bdy, cdy, adz, bdz, cdz;
             double det, errbound;
@@ -988,7 +993,7 @@ namespace VoronatorSharp
                 {
                     negate = -bdxtail;
                     EA.TwoProduct(negate, adytail, out bdxt_adyt1, out bdxt_adyt0);
-                    EA.TwoOneProduct(bdxt_adyt1, bdxt_adyt0, cdz, out u3, out  u[2], out u[1], out u[0]);
+                    EA.TwoOneProduct(bdxt_adyt1, bdxt_adyt0, cdz, out u3, out u[2], out u[1], out u[0]);
                     u[3] = u3;
                     finlength = EA.FastExpansionSumZeroElim(finlength, finnow, 4, u,
                                                             finother);
@@ -1061,6 +1066,7 @@ namespace VoronatorSharp
 
             return finnow[finlength - 1];
         }
+
         #endregion
 
         #region InCircle
@@ -1090,6 +1096,7 @@ namespace VoronatorSharp
         /*  nearly so.                                                               */
         /*                                                                           */
         /*****************************************************************************/
+
         // |pax pay pax^2+pay^2 1|
         // |pbx pby pbx^2+pby^2 1|
         // |pcx pcy pcx^2+pcy^2 1|
@@ -1181,7 +1188,7 @@ namespace VoronatorSharp
             cdalen = EA.FastExpansionSumZeroElim(templen, temp8, 4, ac, cda);
             templen = EA.FastExpansionSumZeroElim(4, da, 4, ab, temp8);
             dablen = EA.FastExpansionSumZeroElim(templen, temp8, 4, bd, dab);
-            for (i = 0; i < 4; i++) 
+            for (i = 0; i < 4; i++)
             {
                 bd[i] = -bd[i];
                 ac[i] = -ac[i];
@@ -1218,8 +1225,8 @@ namespace VoronatorSharp
             ablen = EA.FastExpansionSumZeroElim(alen, adet, blen, bdet, abdet);
             cdlen = EA.FastExpansionSumZeroElim(clen, cdet, dlen, ddet, cddet);
             deterlen = EA.FastExpansionSumZeroElim(ablen, abdet, cdlen, cddet, deter);
-            
-            // In S. predicates.c, this returns the largest component: 
+
+            // In S. predicates.c, this returns the largest component:
             // deter[deterlen - 1];
             // However, this is not stable due to the expansions not being unique (even for ZeroElim),
             // So we return the summed estimate as the 'Exact' value.
@@ -1305,14 +1312,13 @@ namespace VoronatorSharp
                             out axcy[3], out axcy[2], out axcy[1], out axcy[0]);
             axcy[7] = axcy7;
 
-
             temp16len = EA.FastExpansionSumZeroElim(8, bxcy, 8, cxby, temp16);
 
             xlen = EA.ScaleExpansionZeroElim(temp16len, temp16, adx, detx);
             xxlen = EA.ScaleExpansionZeroElim(xlen, detx, adx, detxx);
             xtlen = EA.ScaleExpansionZeroElim(temp16len, temp16, adxtail, detxt);
             xxtlen = EA.ScaleExpansionZeroElim(xtlen, detxt, adx, detxxt);
-            for (i = 0; i < xxtlen; i++) 
+            for (i = 0; i < xxtlen; i++)
             {
                 detxxt[i] *= 2.0;
             }
@@ -1324,7 +1330,7 @@ namespace VoronatorSharp
             yylen = EA.ScaleExpansionZeroElim(ylen, dety, ady, detyy);
             ytlen = EA.ScaleExpansionZeroElim(temp16len, temp16, adytail, detyt);
             yytlen = EA.ScaleExpansionZeroElim(ytlen, detyt, ady, detyyt);
-            for (i = 0; i < yytlen; i++) 
+            for (i = 0; i < yytlen; i++)
             {
                 detyyt[i] *= 2.0;
             }
@@ -1334,14 +1340,13 @@ namespace VoronatorSharp
 
             alen = EA.FastExpansionSumZeroElim(x2len, x2, y2len, y2, adet);
 
-
             temp16len = EA.FastExpansionSumZeroElim(8, cxay, 8, axcy, temp16);
 
             xlen = EA.ScaleExpansionZeroElim(temp16len, temp16, bdx, detx);
             xxlen = EA.ScaleExpansionZeroElim(xlen, detx, bdx, detxx);
             xtlen = EA.ScaleExpansionZeroElim(temp16len, temp16, bdxtail, detxt);
             xxtlen = EA.ScaleExpansionZeroElim(xtlen, detxt, bdx, detxxt);
-            for (i = 0; i < xxtlen; i++) 
+            for (i = 0; i < xxtlen; i++)
             {
                 detxxt[i] *= 2.0;
             }
@@ -1353,7 +1358,7 @@ namespace VoronatorSharp
             yylen = EA.ScaleExpansionZeroElim(ylen, dety, bdy, detyy);
             ytlen = EA.ScaleExpansionZeroElim(temp16len, temp16, bdytail, detyt);
             yytlen = EA.ScaleExpansionZeroElim(ytlen, detyt, bdy, detyyt);
-            for (i = 0; i < yytlen; i++) 
+            for (i = 0; i < yytlen; i++)
             {
                 detyyt[i] *= 2.0;
             }
@@ -1363,14 +1368,13 @@ namespace VoronatorSharp
 
             blen = EA.FastExpansionSumZeroElim(x2len, x2, y2len, y2, bdet);
 
-
             temp16len = EA.FastExpansionSumZeroElim(8, axby, 8, bxay, temp16);
 
             xlen = EA.ScaleExpansionZeroElim(temp16len, temp16, cdx, detx);
             xxlen = EA.ScaleExpansionZeroElim(xlen, detx, cdx, detxx);
             xtlen = EA.ScaleExpansionZeroElim(temp16len, temp16, cdxtail, detxt);
             xxtlen = EA.ScaleExpansionZeroElim(xtlen, detxt, cdx, detxxt);
-            for (i = 0; i < xxtlen; i++) 
+            for (i = 0; i < xxtlen; i++)
             {
                 detxxt[i] *= 2.0;
             }
@@ -1382,7 +1386,7 @@ namespace VoronatorSharp
             yylen = EA.ScaleExpansionZeroElim(ylen, dety, cdy, detyy);
             ytlen = EA.ScaleExpansionZeroElim(temp16len, temp16, cdytail, detyt);
             yytlen = EA.ScaleExpansionZeroElim(ytlen, detyt, cdy, detyyt);
-            for (i = 0; i < yytlen; i++) 
+            for (i = 0; i < yytlen; i++)
             {
                 detyyt[i] *= 2.0;
             }
@@ -1395,7 +1399,7 @@ namespace VoronatorSharp
             ablen = EA.FastExpansionSumZeroElim(alen, adet, blen, bdet, abdet);
             deterlen = EA.FastExpansionSumZeroElim(ablen, abdet, clen, cdet, deter);
 
-            // In S. predicates.c, this returns the largest component: 
+            // In S. predicates.c, this returns the largest component:
             // deter[deterlen - 1];
             // However, this is not stable due to the expansions not being unique (even for ZeroElim),
             // So we return the summed estimate as the 'Exact' value.
@@ -1437,7 +1441,7 @@ namespace VoronatorSharp
                     + (Math.Abs(cdxady) + Math.Abs(adxcdy)) * blift
                     + (Math.Abs(adxbdy) + Math.Abs(bdxady)) * clift;
             errbound = iccerrboundA * permanent;
-            if ((det > errbound) || (-det > errbound)) 
+            if ((det > errbound) || (-det > errbound))
             {
                 return det;
             }
@@ -1446,7 +1450,7 @@ namespace VoronatorSharp
         }
 
         // Adaptive continuation of InCircle
-        static double InCircleAdapt(double[] pa, double[] pb, double[] pc, double[] pd, double permanent)
+        private static double InCircleAdapt(double[] pa, double[] pb, double[] pc, double[] pd, double permanent)
         {
             double adx, bdx, cdx, ady, bdy, cdy;
             double det, errbound;
@@ -1831,7 +1835,6 @@ namespace VoronatorSharp
                     finlength = EA.FastExpansionSumZeroElim(finlength, finnow, temp48len, temp48, finother);
                     finswap = finnow; finnow = finother; finother = finswap;
 
-
                     temp32alen = EA.ScaleExpansionZeroElim(aytbctlen, aytbct, adytail, temp32a);
                     aytbcttlen = EA.ScaleExpansionZeroElim(bcttlen, bctt, adytail, aytbctt);
                     temp16alen = EA.ScaleExpansionZeroElim(aytbcttlen, aytbctt, 2.0 * ady, temp16a);
@@ -1913,7 +1916,6 @@ namespace VoronatorSharp
                     temp48len = EA.FastExpansionSumZeroElim(temp16alen, temp16a, temp32alen, temp32a, temp48);
                     finlength = EA.FastExpansionSumZeroElim(finlength, finnow, temp48len, temp48, finother);
                     finswap = finnow; finnow = finother; finother = finswap;
-
 
                     temp32alen = EA.ScaleExpansionZeroElim(bytcatlen, bytcat, bdytail, temp32a);
                     bytcattlen = EA.ScaleExpansionZeroElim(cattlen, catt, bdytail, bytcatt);
@@ -1997,7 +1999,6 @@ namespace VoronatorSharp
                     finlength = EA.FastExpansionSumZeroElim(finlength, finnow, temp48len, temp48, finother);
                     finswap = finnow; finnow = finother; finother = finswap;
 
-
                     temp32alen = EA.ScaleExpansionZeroElim(cytabtlen, cytabt, cdytail, temp32a);
                     cytabttlen = EA.ScaleExpansionZeroElim(abttlen, abtt, cdytail, cytabtt);
                     temp16alen = EA.ScaleExpansionZeroElim(cytabttlen, cytabtt, 2.0 * cdy, temp16a);
@@ -2011,6 +2012,7 @@ namespace VoronatorSharp
 
             return finnow[finlength - 1];
         }
+
         #endregion
 
         #region InSphere
@@ -2253,7 +2255,7 @@ namespace VoronatorSharp
 
             temp48alen = EA.FastExpansionSumZeroElim(cdelen, cde, bcelen, bce, temp48a);
             temp48blen = EA.FastExpansionSumZeroElim(deblen, deb, bcdlen, bcd, temp48b);
-            for (i = 0; i < temp48blen; i++) 
+            for (i = 0; i < temp48blen; i++)
             {
                 temp48b[i] = -temp48b[i];
             }
@@ -2269,7 +2271,7 @@ namespace VoronatorSharp
 
             temp48alen = EA.FastExpansionSumZeroElim(dealen, dea, cdalen, cda, temp48a);
             temp48blen = EA.FastExpansionSumZeroElim(eaclen, eac, cdelen, cde, temp48b);
-            for (i = 0; i < temp48blen; i++) 
+            for (i = 0; i < temp48blen; i++)
             {
                 temp48b[i] = -temp48b[i];
             }
@@ -2285,7 +2287,7 @@ namespace VoronatorSharp
 
             temp48alen = EA.FastExpansionSumZeroElim(eablen, eab, deblen, deb, temp48a);
             temp48blen = EA.FastExpansionSumZeroElim(abdlen, abd, dealen, dea, temp48b);
-            for (i = 0; i < temp48blen; i++) 
+            for (i = 0; i < temp48blen; i++)
             {
                 temp48b[i] = -temp48b[i];
             }
@@ -2301,7 +2303,7 @@ namespace VoronatorSharp
 
             temp48alen = EA.FastExpansionSumZeroElim(abclen, abc, eaclen, eac, temp48a);
             temp48blen = EA.FastExpansionSumZeroElim(bcelen, bce, eablen, eab, temp48b);
-            for (i = 0; i < temp48blen; i++) 
+            for (i = 0; i < temp48blen; i++)
             {
                 temp48b[i] = -temp48b[i];
             }
@@ -2317,7 +2319,7 @@ namespace VoronatorSharp
 
             temp48alen = EA.FastExpansionSumZeroElim(bcdlen, bcd, abdlen, abd, temp48a);
             temp48blen = EA.FastExpansionSumZeroElim(cdalen, cda, abclen, abc, temp48b);
-            for (i = 0; i < temp48blen; i++) 
+            for (i = 0; i < temp48blen; i++)
             {
                 temp48b[i] = -temp48b[i];
             }
@@ -2336,7 +2338,7 @@ namespace VoronatorSharp
             cdelen = EA.FastExpansionSumZeroElim(cdlen, cddet, elen, edet, cdedet);
             deterlen = EA.FastExpansionSumZeroElim(ablen, abdet, cdelen, cdedet, deter);
 
-            // In S. predicates.c, this returns the largest component: 
+            // In S. predicates.c, this returns the largest component:
             // deter[deterlen - 1];
             // However, this is not stable due to the expansions not being unique (even for ZeroElim),
             // So we return the summed estimate as the 'Exact' value.
@@ -2495,7 +2497,7 @@ namespace VoronatorSharp
             negate = -bey;
             negatetail = -beytail;
             EA.TwoTwoProduct(dex, dextail, negate, negatetail,
-                            out dxby7, out  dxby[6], out dxby[5], out dxby[4],
+                            out dxby7, out dxby[6], out dxby[5], out dxby[4],
                             out dxby[3], out dxby[2], out dxby[1], out dxby[0]);
             dxby[7] = dxby7;
             bdlen = EA.FastExpansionSumZeroElim(8, bxdy, 8, dxby, bd);
@@ -2515,7 +2517,7 @@ namespace VoronatorSharp
             xxlen = EA.ScaleExpansionZeroElim(xlen, detx, aex, detxx);
             xtlen = EA.ScaleExpansionZeroElim(temp192len, temp192, aextail, detxt);
             xxtlen = EA.ScaleExpansionZeroElim(xtlen, detxt, aex, detxxt);
-            for (i = 0; i < xxtlen; i++) 
+            for (i = 0; i < xxtlen; i++)
             {
                 detxxt[i] *= 2.0;
             }
@@ -2526,7 +2528,7 @@ namespace VoronatorSharp
             yylen = EA.ScaleExpansionZeroElim(ylen, dety, aey, detyy);
             ytlen = EA.ScaleExpansionZeroElim(temp192len, temp192, aeytail, detyt);
             yytlen = EA.ScaleExpansionZeroElim(ytlen, detyt, aey, detyyt);
-            for (i = 0; i < yytlen; i++) 
+            for (i = 0; i < yytlen; i++)
             {
                 detyyt[i] *= 2.0;
             }
@@ -2537,7 +2539,7 @@ namespace VoronatorSharp
             zzlen = EA.ScaleExpansionZeroElim(zlen, detz, aez, detzz);
             ztlen = EA.ScaleExpansionZeroElim(temp192len, temp192, aeztail, detzt);
             zztlen = EA.ScaleExpansionZeroElim(ztlen, detzt, aez, detzzt);
-            for (i = 0; i < zztlen; i++) 
+            for (i = 0; i < zztlen; i++)
             {
                 detzzt[i] *= 2.0;
             }
@@ -2562,7 +2564,7 @@ namespace VoronatorSharp
             xxlen = EA.ScaleExpansionZeroElim(xlen, detx, bex, detxx);
             xtlen = EA.ScaleExpansionZeroElim(temp192len, temp192, bextail, detxt);
             xxtlen = EA.ScaleExpansionZeroElim(xtlen, detxt, bex, detxxt);
-            for (i = 0; i < xxtlen; i++) 
+            for (i = 0; i < xxtlen; i++)
             {
                 detxxt[i] *= 2.0;
             }
@@ -2573,7 +2575,7 @@ namespace VoronatorSharp
             yylen = EA.ScaleExpansionZeroElim(ylen, dety, bey, detyy);
             ytlen = EA.ScaleExpansionZeroElim(temp192len, temp192, beytail, detyt);
             yytlen = EA.ScaleExpansionZeroElim(ytlen, detyt, bey, detyyt);
-            for (i = 0; i < yytlen; i++) 
+            for (i = 0; i < yytlen; i++)
             {
                 detyyt[i] *= 2.0;
             }
@@ -2584,7 +2586,7 @@ namespace VoronatorSharp
             zzlen = EA.ScaleExpansionZeroElim(zlen, detz, bez, detzz);
             ztlen = EA.ScaleExpansionZeroElim(temp192len, temp192, beztail, detzt);
             zztlen = EA.ScaleExpansionZeroElim(ztlen, detzt, bez, detzzt);
-            for (i = 0; i < zztlen; i++) 
+            for (i = 0; i < zztlen; i++)
             {
                 detzzt[i] *= 2.0;
             }
@@ -2609,7 +2611,7 @@ namespace VoronatorSharp
             xxlen = EA.ScaleExpansionZeroElim(xlen, detx, cex, detxx);
             xtlen = EA.ScaleExpansionZeroElim(temp192len, temp192, cextail, detxt);
             xxtlen = EA.ScaleExpansionZeroElim(xtlen, detxt, cex, detxxt);
-            for (i = 0; i < xxtlen; i++) 
+            for (i = 0; i < xxtlen; i++)
             {
                 detxxt[i] *= 2.0;
             }
@@ -2620,7 +2622,7 @@ namespace VoronatorSharp
             yylen = EA.ScaleExpansionZeroElim(ylen, dety, cey, detyy);
             ytlen = EA.ScaleExpansionZeroElim(temp192len, temp192, ceytail, detyt);
             yytlen = EA.ScaleExpansionZeroElim(ytlen, detyt, cey, detyyt);
-            for (i = 0; i < yytlen; i++) 
+            for (i = 0; i < yytlen; i++)
             {
                 detyyt[i] *= 2.0;
             }
@@ -2631,7 +2633,7 @@ namespace VoronatorSharp
             zzlen = EA.ScaleExpansionZeroElim(zlen, detz, cez, detzz);
             ztlen = EA.ScaleExpansionZeroElim(temp192len, temp192, ceztail, detzt);
             zztlen = EA.ScaleExpansionZeroElim(ztlen, detzt, cez, detzzt);
-            for (i = 0; i < zztlen; i++) 
+            for (i = 0; i < zztlen; i++)
             {
                 detzzt[i] *= 2.0;
             }
@@ -2667,7 +2669,7 @@ namespace VoronatorSharp
             yylen = EA.ScaleExpansionZeroElim(ylen, dety, dey, detyy);
             ytlen = EA.ScaleExpansionZeroElim(temp192len, temp192, deytail, detyt);
             yytlen = EA.ScaleExpansionZeroElim(ytlen, detyt, dey, detyyt);
-            for (i = 0; i < yytlen; i++) 
+            for (i = 0; i < yytlen; i++)
             {
                 detyyt[i] *= 2.0;
             }
@@ -2678,7 +2680,7 @@ namespace VoronatorSharp
             zzlen = EA.ScaleExpansionZeroElim(zlen, detz, dez, detzz);
             ztlen = EA.ScaleExpansionZeroElim(temp192len, temp192, deztail, detzt);
             zztlen = EA.ScaleExpansionZeroElim(ztlen, detzt, dez, detzzt);
-            for (i = 0; i < zztlen; i++) 
+            for (i = 0; i < zztlen; i++)
             {
                 detzzt[i] *= 2.0;
             }
@@ -2692,7 +2694,7 @@ namespace VoronatorSharp
             cdlen = EA.FastExpansionSumZeroElim(clen, cdet, dlen, ddet, cddet);
             deterlen = EA.FastExpansionSumZeroElim(ablen, abdet, cdlen, cddet, deter);
 
-            // In S. predicates.c, this returns the largest component: 
+            // In S. predicates.c, this returns the largest component:
             // deter[deterlen - 1];
             // However, this is not stable due to the expansions not being unique (even for ZeroElim),
             // So we return the summed estimate as the 'Exact' value.
@@ -2794,7 +2796,7 @@ namespace VoronatorSharp
                         + (aexbeyplus + bexaeyplus) * cezplus)
                     * dlift;
             errbound = isperrboundA * permanent;
-            if ((det > errbound) || (-det > errbound)) 
+            if ((det > errbound) || (-det > errbound))
             {
                 return det;
             }
@@ -2803,7 +2805,7 @@ namespace VoronatorSharp
         }
 
         // Adaptive continuation of InSphere
-        static double InSphereAdapt(double[] pa, double[] pb, double[] pc, double[] pd, double[] pe, double permanent)
+        private static double InSphereAdapt(double[] pa, double[] pb, double[] pc, double[] pd, double[] pe, double permanent)
         {
             double aex, bex, cex, dex, aey, bey, cey, dey, aez, bez, cez, dez;
             double det, errbound;
