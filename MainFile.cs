@@ -14,7 +14,7 @@ internal class MainFile
         RealMap.mapWidth = 1021;
         RealMap.mapHeight = 1024;
         RealMap.landplateCount = 4;
-        RealMap.seaplateCount = 1;
+        RealMap.seaplateCount = 0;
         RealMap.blurLength = 3; //20
         RealMap.blurWeight = 4; //50
         RealMap.minLandFillCont = 40; //20

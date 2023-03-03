@@ -820,6 +820,203 @@ namespace Realistic
 
         public static List<Point> globalRivers = new List<Point>();
 
+        public static void makeRivers()
+        {
+            foreach (mapPlate plate in plateDB)
+            {
+                foreach (Point point in plate.riverPoints)
+                {
+                    int x = point.X;
+                    int y = point.Y;
+                    bool foundSea = false;
+                    int riverlooper = 0;
+                    List<Point> visited = new List<Point>();
+                    visited.Add(point);
+                    imageWindow.Refresh();
+                    while (foundSea == false && riverlooper < 5000001)
+                    {
+                        Point currpoint = new Point(x,y);
+                        List<Point> pointList = new List<Point>();
+                        bool invalidTile = false;
+                        Point dPoint = new Point(x, y - 1);
+                        if (!visited.Contains(dPoint))
+                        {
+                            Point ntileN = new Point(dPoint.X, dPoint.Y - 1);
+                            Point ntileE = new Point(dPoint.X + 1, dPoint.Y);
+                            Point ntileS = new Point(dPoint.X, dPoint.Y + 1);
+                            Point ntileW = new Point(dPoint.X - 1, dPoint.Y);
+                            Point[] nngbors = { ntileN, ntileE, ntileS, ntileW };
+                            foreach (Point npoint in nngbors)
+                            {
+                                if (npoint.X < 0 || npoint.X > mapWidth - 1 || npoint.Y < 0 || npoint.Y > mapHeight - 1)
+                                {
+                                    continue;
+                                }
+                                if (npoint == currpoint)
+                                {
+                                    continue;
+                                }
+                                if (visited.Contains(npoint))
+                                {
+                                    invalidTile = true;
+                                    break;
+                                }
+                            }
+                            if (!invalidTile)
+                            {
+                                pointList.Add(dPoint);
+                            }
+                        }
+                        dPoint = new Point(x + 1, y);
+                        if (!visited.Contains(dPoint))
+                        {
+                            Point ntileN = new Point(dPoint.X, dPoint.Y - 1);
+                            Point ntileE = new Point(dPoint.X + 1, dPoint.Y);
+                            Point ntileS = new Point(dPoint.X, dPoint.Y + 1);
+                            Point ntileW = new Point(dPoint.X - 1, dPoint.Y);
+                            Point[] nngbors = { ntileN, ntileE, ntileS, ntileW };
+                            foreach (Point npoint in nngbors)
+                            {
+                                if (npoint.X < 0 || npoint.X > mapWidth - 1 || npoint.Y < 0 || npoint.Y > mapHeight - 1)
+                                {
+                                    continue;
+                                }
+                                if (npoint == currpoint)
+                                {
+                                    continue;
+                                }
+                                if (visited.Contains(npoint))
+                                {
+                                    invalidTile = true;
+                                    break;
+                                }
+                            }
+                            if (!invalidTile)
+                            {
+                                pointList.Add(dPoint);
+                            }
+                        }
+                        dPoint = new Point(x, y + 1);
+                        if (!visited.Contains(dPoint))
+                        {
+                            Point ntileN = new Point(dPoint.X, dPoint.Y - 1);
+                            Point ntileE = new Point(dPoint.X + 1, dPoint.Y);
+                            Point ntileS = new Point(dPoint.X, dPoint.Y + 1);
+                            Point ntileW = new Point(dPoint.X - 1, dPoint.Y);
+                            Point[] nngbors = { ntileN, ntileE, ntileS, ntileW };
+                            foreach (Point npoint in nngbors)
+                            {
+                                if (npoint.X < 0 || npoint.X > mapWidth - 1 || npoint.Y < 0 || npoint.Y > mapHeight - 1)
+                                {
+                                    continue;
+                                }
+                                if (npoint == currpoint)
+                                {
+                                    continue;
+                                }
+                                if (visited.Contains(npoint))
+                                {
+                                    invalidTile = true;
+                                    break;
+                                }
+                            }
+                            if (!invalidTile)
+                            {
+                                pointList.Add(dPoint);
+                            }
+                        }
+                        dPoint = new Point(x - 1, y);
+                        if (!visited.Contains(dPoint))
+                        {
+                            Point ntileN = new Point(dPoint.X, dPoint.Y - 1);
+                            Point ntileE = new Point(dPoint.X + 1, dPoint.Y);
+                            Point ntileS = new Point(dPoint.X, dPoint.Y + 1);
+                            Point ntileW = new Point(dPoint.X - 1, dPoint.Y);
+                            Point[] nngbors = { ntileN, ntileE, ntileS, ntileW };
+                            foreach (Point npoint in nngbors)
+                            {
+                                if (npoint.X < 0 || npoint.X > mapWidth - 1 || npoint.Y < 0 || npoint.Y > mapHeight - 1)
+                                {
+                                    continue;
+                                }
+                                if (npoint == currpoint)
+                                {
+                                    continue;
+                                }
+                                if (visited.Contains(npoint))
+                                {
+                                    invalidTile = true;
+                                    break;
+                                }
+                            }
+                            if (!invalidTile)
+                            {
+                                pointList.Add(dPoint);
+                            }
+                        }
+                        if (pointList.Count == 0)
+                        {
+                            foreach (Point rpoint in visited)
+                            {
+                                if (!globalRivers.Contains(rpoint))
+                                {
+                                    tileDB[rpoint.X, rpoint.Y].river = false;
+                                    mapImage.SetPixel(rpoint.X, rpoint.Y, Color.Pink);
+                                }
+                            }
+                            break;
+                        }
+                        Point lowestNeighbor = pointList[rd.Next(0, pointList.Count)];
+                        foreach (Point newPoint in pointList)
+                        {
+                            if (tileDB[newPoint.X, newPoint.Y].landType == 0)
+                            {
+                                foundSea = true;
+                                break;
+                            }
+                            if (tileDB[newPoint.X, newPoint.Y].height < tileDB[lowestNeighbor.X, lowestNeighbor.Y].height)
+                            {
+                                lowestNeighbor = newPoint;
+                            }
+                        }
+                        if (tileDB[currpoint.X, currpoint.Y].height < tileDB[lowestNeighbor.X, lowestNeighbor.Y].height)
+                        {
+                            tileDB[lowestNeighbor.X, lowestNeighbor.Y].height = Math.Max(1, tileDB[currpoint.X, currpoint.Y].height - 1);
+                        }
+                        if (!foundSea)
+                        {
+                            visited.Add(lowestNeighbor);
+                            tileDB[lowestNeighbor.X, lowestNeighbor.Y].river = true;
+                            int color = Math.Min(riverlooper, 255);
+                            color = 255;
+                            mapImage.SetPixel(lowestNeighbor.X, lowestNeighbor.Y, Color.FromArgb(color, 0, 0));
+                            x = lowestNeighbor.X;
+                            y = lowestNeighbor.Y;
+                            riverlooper++;
+                        }
+                    }
+                    if (riverlooper == 5000000)
+                    {
+                        foreach (Point rpoint in visited)
+                        {
+                            if (!globalRivers.Contains(rpoint))
+                            {
+                                tileDB[rpoint.X, rpoint.Y].river = false;
+                                mapImage.SetPixel(rpoint.X, rpoint.Y, Color.Green);
+                            }
+                        }
+                        break;
+                    }
+                    foreach (Point rpoint in visited)
+                    {
+                        globalRivers.Add(rpoint);
+                    }
+                }
+            }
+        }
+
+        public static List<Point> globalRivers = new List<Point>();
+
         public static void makeHills()
         {
             foreach (mapPlate plate in plateDB)
